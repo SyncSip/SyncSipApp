@@ -1,0 +1,556 @@
+openapi: 3.0.0
+paths:
+  /:
+    get:
+      operationId: AppController_getHello
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags:
+        - App
+  /auth/register:
+    post:
+      operationId: AuthController_register
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserDto"
+      responses:
+        "201":
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponseDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Register a new user
+      tags: &a1
+        - Auth
+  /auth/login:
+    post:
+      operationId: AuthController_login
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginDto"
+      responses:
+        "200":
+          description: User successfully logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponseDto"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+      summary: Login user
+      tags: *a1
+  /shots/shot/{id}:
+    get:
+      operationId: ShotsController_get
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadShotDto"
+      responses:
+        "201":
+          description: Shot Successfully Read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadShotDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Get a Shot
+      tags: &a2
+        - shots
+  /shots/shot/{userId}:
+    get:
+      operationId: ShotsController_getAll
+      parameters:
+        - name: userId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ReadShotDto"
+      responses:
+        "201":
+          description: Shots Successfully Read
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReadShotDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Get all Shots
+      tags: *a2
+  /shots/shot:
+    post:
+      operationId: ShotsController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateShotDto"
+      responses:
+        "201":
+          description: Shot Successfully Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadShotDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: create one Shot
+      tags: *a2
+    patch:
+      operationId: ShotsController_edit
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditShotDto"
+      responses:
+        "201":
+          description: Shot Successfully edited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadShotDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Edit one shot
+      tags: *a2
+  /user/user:
+    patch:
+      operationId: UsersController_register
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditUserDto"
+      responses:
+        "201":
+          description: User successfully edited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponseDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: edit a user
+      tags: &a3
+        - user
+    delete:
+      operationId: UsersController_login
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteUserDto"
+      responses:
+        "200":
+          description: Delete User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponseDto"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+      summary: Delete a user
+      tags: *a3
+info:
+  title: SyncSipApi
+  description: API For the SyncSip App
+  version: "1.0"
+  contact: {}
+tags: []
+servers: []
+components:
+  schemas:
+    CreateUserDto:
+      type: object
+      properties:
+        email:
+          type: string
+          description: The user's email address
+          example: user@example.com
+        password:
+          type: string
+          description: The user's password
+          minimum: 8
+          example: password123
+        name:
+          type: string
+          description: The user's name
+          example: John Doe
+      required:
+        - email
+        - password
+        - name
+    UserResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The user's id
+          example: "234957689234"
+        name:
+          type: string
+          description: The user's name
+          example: John Doe
+      required:
+        - id
+        - name
+    LoginDto:
+      type: object
+      properties:
+        email:
+          type: string
+          description: The user's email address
+          example: user@example.com
+        password:
+          type: string
+          description: The user's password
+          minimum: 8
+          example: password123
+      required:
+        - email
+        - password
+    ReadShotDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the shot
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+        userId:
+          type: string
+          description: The user who created the shot
+          example: 123e4567-e89b-12d3-a456-426614174001
+          format: uuid
+        time:
+          type: number
+          description: The shot time in seconds
+          example: 25.5
+        weight:
+          type: number
+          description: The weight of the shot in grams
+          example: 36.5
+        dose:
+          type: number
+          description: The dose of coffee used in grams
+          example: 18
+        machineId:
+          type: string
+          description: The identifier of the machine used
+          example: 123e4567-e89b-12d3-a456-426614174002
+          format: uuid
+        grinderId:
+          type: string
+          description: The identifier of the grinder used
+          example: 123e4567-e89b-12d3-a456-426614174003
+          format: uuid
+        beansId:
+          type: string
+          description: The identifier of the beans used
+          example: 123e4567-e89b-12d3-a456-426614174004
+          format: uuid
+        graphData:
+          type: object
+          description: The shot graph data
+          properties:
+            pressure:
+              type: array
+              items:
+                type: number
+              example:
+                - 9
+                - 9.1
+                - 9
+                - 8.9
+            flow:
+              type: array
+              items:
+                type: number
+              example:
+                - 2
+                - 2.1
+                - 2
+                - 1.9
+            temperature:
+              type: array
+              items:
+                type: number
+              example:
+                - 93.5
+                - 93.4
+                - 93.3
+                - 93.2
+          additionalProperties: false
+        group:
+          type: string
+          description: The group identifier
+          example: Fruity
+        starred:
+          type: boolean
+          description: Whether the shot is starred/favorited
+          example: true
+        createdAt:
+          format: date-time
+          type: string
+          description: Timestamp of the time when the shot was created
+          example: 2025-01-08T17:46:02.908Z
+      required:
+        - id
+        - userId
+        - time
+        - weight
+        - dose
+        - machineId
+        - grinderId
+        - beansId
+        - graphData
+        - group
+        - starred
+        - createdAt
+    CreateShotDto:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: The user who created the shot
+          example: 123e4567-e89b-12d3-a456-426614174001
+          format: uuid
+        time:
+          type: number
+          description: The shot time in seconds
+          example: 25.5
+        weight:
+          type: number
+          description: The weight of the shot in grams
+          example: 36.5
+        dose:
+          type: number
+          description: The dose of coffee used in grams
+          example: 18
+        machineId:
+          type: string
+          description: The identifier of the machine used
+          example: 123e4567-e89b-12d3-a456-426614174002
+          format: uuid
+        grinderId:
+          type: string
+          description: The identifier of the grinder used
+          example: 123e4567-e89b-12d3-a456-426614174003
+          format: uuid
+        beansId:
+          type: string
+          description: The identifier of the beans used
+          example: 123e4567-e89b-12d3-a456-426614174004
+          format: uuid
+        graphData:
+          type: object
+          description: The shot graph data
+          properties:
+            pressure:
+              type: array
+              items:
+                type: number
+              example:
+                - 9
+                - 9.1
+                - 9
+                - 8.9
+            flow:
+              type: array
+              items:
+                type: number
+              example:
+                - 2
+                - 2.1
+                - 2
+                - 1.9
+            temperature:
+              type: array
+              items:
+                type: number
+              example:
+                - 93.5
+                - 93.4
+                - 93.3
+                - 93.2
+          additionalProperties: false
+        group:
+          type: string
+          description: The group identifier
+          example: Fruity
+        starred:
+          type: boolean
+          description: Whether the shot is starred/favorited
+          example: true
+      required:
+        - userId
+        - time
+        - weight
+        - dose
+        - machineId
+        - grinderId
+        - beansId
+        - graphData
+        - group
+        - starred
+    EditShotDto:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: The user who created the shot
+          example: 123e4567-e89b-12d3-a456-426614174001
+          format: uuid
+        time:
+          type: number
+          description: The shot time in seconds
+          example: 25.5
+        weight:
+          type: number
+          description: The weight of the shot in grams
+          example: 36.5
+        dose:
+          type: number
+          description: The dose of coffee used in grams
+          example: 18
+        machineId:
+          type: string
+          description: The identifier of the machine used
+          example: 123e4567-e89b-12d3-a456-426614174002
+          format: uuid
+        grinderId:
+          type: string
+          description: The identifier of the grinder used
+          example: 123e4567-e89b-12d3-a456-426614174003
+          format: uuid
+        beansId:
+          type: string
+          description: The identifier of the beans used
+          example: 123e4567-e89b-12d3-a456-426614174004
+          format: uuid
+        graphData:
+          type: object
+          description: The shot graph data
+          properties:
+            pressure:
+              type: array
+              items:
+                type: number
+              example:
+                - 9
+                - 9.1
+                - 9
+                - 8.9
+            flow:
+              type: array
+              items:
+                type: number
+              example:
+                - 2
+                - 2.1
+                - 2
+                - 1.9
+            temperature:
+              type: array
+              items:
+                type: number
+              example:
+                - 93.5
+                - 93.4
+                - 93.3
+                - 93.2
+          additionalProperties: false
+        group:
+          type: string
+          description: The group identifier
+          example: Fruity
+        starred:
+          type: boolean
+          description: Whether the shot is starred/favorited
+          example: true
+      required:
+        - userId
+        - time
+        - weight
+        - dose
+        - machineId
+        - grinderId
+        - beansId
+        - graphData
+        - group
+        - starred
+    EditUserDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The user's name
+          example: John Doe
+      required:
+        - name
+    DeleteUserDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The users id
+          example: "76342976324893"
+      required:
+        - id
