@@ -2,12 +2,22 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import * as fs from 'fs';
+import * as YAML from 'yaml'
+import { ConfigService } from '@nestjs/config';
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.useGlobalPipes(new ValidationPipe());
+  const configService = app.get(ConfigService);
+  const port = configService.get('server.port');
   
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    transform: true,
+  }));
+
 
   const config = new DocumentBuilder()
     .setTitle('SyncSipApi')
@@ -16,8 +26,12 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
 
-  await app.listen(3000);
+  const yamlString = YAML.stringify(document);
+  fs.writeFileSync('../OpenApiConfig/openapi-spec.yaml', yamlString);
+
+  SwaggerModule.setup('docs', app, document);
+
+  await app.listen(port);
 }
 bootstrap();
