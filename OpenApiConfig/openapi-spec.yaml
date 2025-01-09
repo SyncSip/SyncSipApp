@@ -56,7 +56,7 @@ paths:
           description: Internal Server Error
       summary: Login user
       tags: *a1
-  /shots/shot/{id}:
+  /shots/{id}:
     get:
       operationId: ShotsController_get
       parameters:
@@ -65,14 +65,8 @@ paths:
           in: path
           schema:
             type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ReadShotDto"
       responses:
-        "201":
+        "200":
           description: Shot Successfully Read
           content:
             application/json:
@@ -85,7 +79,28 @@ paths:
       summary: Get a Shot
       tags: &a2
         - shots
-  /shots/shot/{userId}:
+    delete:
+      operationId: ShotsController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Shot Successfully Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadShotDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Delete One Shot
+      tags: *a2
+  /shots/many/{userId}:
     get:
       operationId: ShotsController_getAll
       parameters:
@@ -94,16 +109,8 @@ paths:
           in: path
           schema:
             type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/ReadShotDto"
       responses:
-        "201":
+        "200":
           description: Shots Successfully Read
           content:
             application/json:
@@ -117,7 +124,7 @@ paths:
           description: Internal Server Error
       summary: Get all Shots
       tags: *a2
-  /shots/shot:
+  /shots/one:
     post:
       operationId: ShotsController_create
       parameters: []
@@ -140,9 +147,15 @@ paths:
           description: Internal Server Error
       summary: create one Shot
       tags: *a2
+  /shots/one/{id}:
     patch:
       operationId: ShotsController_edit
-      parameters: []
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -162,6 +175,366 @@ paths:
           description: Internal Server Error
       summary: Edit one shot
       tags: *a2
+  /machines/{id}:
+    get:
+      operationId: MachinesController_get
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Machine Successfully Read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadMachineDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Get a Machine
+      tags: &a3
+        - Machines
+    delete:
+      operationId: MachinesController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Machines Successfully Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadMachineDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Delete One Machine
+      tags: *a3
+    patch:
+      operationId: MachinesController_edit
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditMachineDto"
+      responses:
+        "200":
+          description: Machines Successfully edited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadMachineDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Edit One Machine
+      tags: *a3
+  /machines/many/{id}:
+    get:
+      operationId: MachinesController_getAll
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Machines Successfully Read
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReadMachineDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Get many Machines
+      tags: *a3
+  /machines:
+    post:
+      operationId: MachinesController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMachineDto"
+      responses:
+        "200":
+          description: Machines Successfully Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReadMachineDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Create One Machine
+      tags: *a3
+  /grinders/{id}:
+    get:
+      operationId: GrindersController_get
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Grinder Successfully Read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadGrinderDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Get a Grinder
+      tags: &a4
+        - Grinders
+    delete:
+      operationId: GrindersController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: grinder Successfully Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadGrinderDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Delete One Grinder
+      tags: *a4
+    patch:
+      operationId: GrindersController_edit
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditGrinderDto"
+      responses:
+        "200":
+          description: Grinder Successfully edited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadGrinderDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Edit One Grinder
+      tags: *a4
+  /grinders/many/{id}:
+    get:
+      operationId: GrindersController_getAll
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Grinders Successfully Read
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReadGrinderDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Get many Grinders
+      tags: *a4
+  /grinders:
+    post:
+      operationId: GrindersController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGrinderDto"
+      responses:
+        "200":
+          description: Grinder Successfully Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReadGrinderDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Create One Grinder
+      tags: *a4
+  /beans/{id}:
+    get:
+      operationId: BeansController_get
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bean Successfully Read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadBeanDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Get a bean
+      tags: &a5
+        - Beans
+    delete:
+      operationId: BeansController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: bean Successfully Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadBeanDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Delete One bean
+      tags: *a5
+    patch:
+      operationId: BeansController_edit
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditBeanDto"
+      responses:
+        "200":
+          description: Bean Successfully edited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadBeanDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Edit One Bean
+      tags: *a5
+  /beans/many/{id}:
+    get:
+      operationId: BeansController_getAll
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Beans Successfully Read
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReadBeanDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Get many Beans
+      tags: *a5
+  /beans:
+    post:
+      operationId: BeansController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBeanDto"
+      responses:
+        "200":
+          description: Bean Successfully Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReadBeanDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: Create One Bean
+      tags: *a5
   /user/user:
     patch:
       operationId: UsersController_register
@@ -184,7 +557,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: edit a user
-      tags: &a3
+      tags: &a6
         - user
     delete:
       operationId: UsersController_login
@@ -207,7 +580,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Delete a user
-      tags: *a3
+      tags: *a6
 info:
   title: SyncSipApi
   description: API For the SyncSip App
@@ -350,7 +723,12 @@ components:
           format: date-time
           type: string
           description: Timestamp of the time when the shot was created
-          example: 2025-01-08T17:46:02.908Z
+          example: 2025-01-09T20:14:33.713Z
+        updatedAt:
+          format: date-time
+          type: string
+          description: Timestamp of the time when the shot was created
+          example: 2025-01-09T20:14:33.713Z
       required:
         - id
         - userId
@@ -364,6 +742,7 @@ components:
         - group
         - starred
         - createdAt
+        - updatedAt
     CreateShotDto:
       type: object
       properties:
@@ -536,6 +915,174 @@ components:
         - graphData
         - group
         - starred
+    ReadMachineDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The Machines id
+          example: "234957689234"
+        brandName:
+          type: string
+          description: The machines Brand Name
+          example: La Marzocco
+        model:
+          type: string
+          description: The Machine Model
+          example: Linea Micra
+        userId:
+          type: string
+          description: The users id the machine belongs to
+          example: 7963432324987hr
+      required:
+        - id
+        - brandName
+        - model
+        - userId
+    CreateMachineDto:
+      type: object
+      properties:
+        brandName:
+          type: string
+          description: The machines Brand Name
+          example: La Marzocco
+        model:
+          type: string
+          description: The Machine Model
+          example: Linea Micra
+        userId:
+          type: string
+          description: The users id the machine belongs to
+          example: 7963432324987hr
+      required:
+        - brandName
+        - model
+        - userId
+    EditMachineDto:
+      type: object
+      properties:
+        brandName:
+          type: string
+          description: The machines Brand Name
+          example: La Marzocco
+        model:
+          type: string
+          description: The Machine Model
+          example: Linea Micra
+    ReadGrinderDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The grinder's id
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+        brandName:
+          type: string
+          description: The grinder's brand name
+          example: Niche
+        model:
+          type: string
+          description: The grinder's model
+          example: Zero
+        userId:
+          type: string
+          description: The user's id the grinder belongs to
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+      required:
+        - id
+        - brandName
+        - model
+        - userId
+    CreateGrinderDto:
+      type: object
+      properties:
+        brandName:
+          type: string
+          description: The grinder's brand name
+          example: Niche
+        model:
+          type: string
+          description: The grinder's model
+          example: Zero
+        userId:
+          type: string
+          description: The user's id the grinder belongs to
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+      required:
+        - brandName
+        - model
+        - userId
+    EditGrinderDto:
+      type: object
+      properties:
+        brandName:
+          type: string
+          description: The grinder's brand name
+          example: Niche
+        model:
+          type: string
+          description: The grinder's model
+          example: Zero
+    ReadBeanDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The bean's id
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+        roastery:
+          type: string
+          description: The name of the roastery
+          example: Square Mile
+        bean:
+          type: string
+          description: The name of the bean/blend
+          example: Red Brick
+        userId:
+          type: string
+          description: The user's id the beans belong to
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+      required:
+        - id
+        - roastery
+        - bean
+        - userId
+    CreateBeanDto:
+      type: object
+      properties:
+        roastery:
+          type: string
+          description: The name of the roastery
+          example: Square Mile
+        bean:
+          type: string
+          description: The name of the bean/blend
+          example: Red Brick
+        userId:
+          type: string
+          description: The user's id the beans belong to
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+      required:
+        - roastery
+        - bean
+        - userId
+    EditBeanDto:
+      type: object
+      properties:
+        roastery:
+          type: string
+          description: The name of the roastery
+          example: Square Mile
+        bean:
+          type: string
+          description: The name of the bean/blend
+          example: Red Brick
     EditUserDto:
       type: object
       properties:
