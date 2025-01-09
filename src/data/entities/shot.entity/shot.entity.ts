@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { User } from '../user.entity/user.entity';
 import { Machine } from '../machine.entity/machine.entity';
 import { Grinder } from '../grinder.entity/grinder.entity';
@@ -21,19 +29,19 @@ export class Shot {
   @Column('float')
   dose: number;
 
-  @Column('uuid')
+  @Column('uuid', { nullable: true })
   machineId: string;
 
-  @Column('uuid')
+  @Column('uuid', { nullable: true })
   grinderId: string;
 
-  @Column('uuid')
+  @Column('uuid', { nullable: true })
   beansId: string;
 
   @Column('jsonb', { nullable: true })
   graphData: any;
 
-  @Column()
+  @Column({ nullable: true })
   group: string;
 
   @Column({ default: false })
@@ -45,7 +53,7 @@ export class Shot {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => User, user => user.shots)
+  @ManyToOne(() => User, (user) => user.shots)
   @JoinColumn({ name: 'userId' })
   user: User;
 
