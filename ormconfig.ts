@@ -18,7 +18,6 @@ const dataSource = new DataSource({
   entities: [User, Shot, Machine, Grinder, Bean],
   migrations: ['src/data/migrations/*.ts'],
   synchronize: false,
-  logging: true,
   extra: {
     max: 5,
     connectionTimeoutMillis: 10000,
