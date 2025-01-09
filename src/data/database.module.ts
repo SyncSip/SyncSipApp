@@ -6,6 +6,7 @@ import { Shot } from './entities/shot.entity/shot.entity';
 import { Machine } from './entities/machine.entity/machine.entity';
 import { Grinder } from './entities/grinder.entity/grinder.entity';
 import { Bean } from './entities/beans.entity/beans.entity';
+import { DatabaseService } from './database.service';
 
 @Global()
 @Module({
@@ -20,12 +21,13 @@ import { Bean } from './entities/beans.entity/beans.entity';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         entities: [User, Shot, Machine, Grinder, Bean],
-        synchronize: configService.get('NODE_ENV') === 'development',
-        logging: configService.get('NODE_ENV') === 'development',
+        synchronize: configService.get('NODE_ENV') === 'development'
       }),
       inject: [ConfigService],
     }),
   ],
-  exports: [TypeOrmModule],
+  exports: [TypeOrmModule, DatabaseService],
+  providers: [DatabaseService]
+
 })
 export class DatabaseModule {}
