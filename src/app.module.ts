@@ -18,12 +18,20 @@ import { databaseConfig, serverConfig } from './config/configuration';
 import { DatabaseModule } from './data/database.module';
 
 @Module({
-  imports: [AuthModule, ShotsModule, MachinesModule, GrindersModule, BeansModule, UsersModule,
+  imports: [
+    AuthModule,
+    ShotsModule,
+    MachinesModule,
+    GrindersModule,
+    BeansModule,
+    UsersModule,
     TypeOrmModule.forRootAsync({
-      imports: [ ConfigModule.forRoot({
-        isGlobal: true,
-      }),
-      DatabaseModule],
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+        }),
+        DatabaseModule,
+      ],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         host: configService.get('database.host'),
