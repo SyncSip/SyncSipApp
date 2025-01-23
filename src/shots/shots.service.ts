@@ -17,7 +17,16 @@ export class ShotsService {
 
   async get(id: string): Promise<ReadShotDto> {
     try {
-          const shot = await this.shotRepository.findOneBy({ id: id });
+          const shot = await this.shotRepository.findOne({
+            where: {
+              id: id
+            },
+            relations: {
+              machine: true,
+              grinder: true,
+              beans: true
+            }
+          });
     if(!shot){
       throw new NotFoundException()
     }
@@ -31,8 +40,16 @@ export class ShotsService {
   async getAll(userId: string): Promise<ReadShotDto[]> {
     try {
         console.log('Fetching shots for userId:', userId);
-        const shots = await this.shotRepository.findBy({ userId: userId });
-        console.log('Found shots:', shots);
+        const shots = await this.shotRepository.find({
+          where: {
+            userId:userId
+          },
+          relations: {
+            machine: true,
+            grinder: true,
+            beans: true
+          }
+        });
         if (!shots) {
             return [];
         }
