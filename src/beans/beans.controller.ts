@@ -23,7 +23,7 @@ export class BeansController {
         return this.beansService.getOne(id)
       }
 
-    @Get("many/:id")
+    @Get("/many/:id")
     @ApiOperation({summary: "Get many Beans"})
     @ApiResponse({
         status: 200,

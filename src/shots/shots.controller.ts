@@ -35,7 +35,7 @@ export class ShotsController {
     return shots;
 }
 
-  @Post('one')
+  @Post('/one')
   @ApiOperation({ summary: 'create one Shot' })
   @ApiBody({ type: CreateShotDto })
   @ApiResponse({
@@ -46,6 +46,7 @@ export class ShotsController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async create(@Body() createShotDto: CreateShotDto) {
+    console.log(createShotDto)
     return await this.ShotsService.create(createShotDto);
   }
 

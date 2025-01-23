@@ -22,7 +22,7 @@ export class GrindersController {
         return this.grindersService.getOne(id)
       }
 
-    @Get("many/:id")
+    @Get("/many/:id")
     @ApiOperation({summary: "Get many Grinders"})
     @ApiResponse({
         status: 200,

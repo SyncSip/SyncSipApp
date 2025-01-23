@@ -22,7 +22,7 @@ export class MachinesController {
         return this.machinesService.getOne(id)
       }
 
-    @Get("many/:id")
+    @Get("/many/:id")
     @ApiOperation({summary: "Get many Machines"})
     @ApiResponse({
         status: 200,
