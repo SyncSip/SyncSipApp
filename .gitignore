@@ -1,26 +1,48 @@
-# compiled output
-/dist
-/node_modules
-/build
+# Dependencies
+**/node_modules/
+**/dist/
+**/build/
+**/web-build/
+
+# Environment Files
+**/.env
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+**/.env.local
+**/.env*.local
+expo-env.d.ts
+
+# Compiled Output
+**/dist/
+**/build/
+**/web-build/
 
 # Logs
-logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
+**/logs
+**/*.log
+**/npm-debug.log*
+**/pnpm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.*
+**/lerna-debug.log*
 
-# OS
+# OS Generated Files
 .DS_Store
+**/.DS_Store
+*.pem
 
-# Tests
-/coverage
-/.nyc_output
+# Test Coverage
+**/coverage/
+**/.nyc_output/
 
-# IDEs and editors
-/.idea
+# IDEs and Editors
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 .project
 .classpath
 .c9/
@@ -28,29 +50,39 @@ lerna-debug.log*
 .settings/
 *.sublime-workspace
 
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+# Temporary Files
+.temp/
+.tmp/
 
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+# Runtime Data
+**/pids
+**/*.pid
+**/*.seed
+**/*.pid.lock
 
-# temp directory
-.temp
-.tmp
+# Diagnostic Reports
+**/report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# Expo Specific
+.expo/
+ios/
+app/api/generated/
+OpenApiConfig/
 
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+# Native Files
+**/*.orig.*
+**/*.jks
+**/*.p8
+**/*.p12
+**/*.key
+**/*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# TypeScript
+**/*.tsbuildinfo
+
+# Project Specific
+app-example/
+OpenApiConfig
