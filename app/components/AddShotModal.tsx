@@ -91,6 +91,22 @@ export default function AddShotModal({
     }
   };
 
+  const handleCancel = () => {
+    setShotData({
+      time: 0,
+      weight: 0,
+      dose: 0,
+      machineId: '',
+      grinderId: '',
+      beansId: '',
+      userId: '',
+      graphData: {},
+      group: '',
+      starred: false
+    });
+    onClose()
+  }
+
   const handleNumberInput = (value: string, field: 'time' | 'weight' | 'dose') => {
     const numberValue = parseFloat(value) || 0;
     setShotData(prev => ({ ...prev, [field]: numberValue }));
@@ -105,10 +121,7 @@ export default function AddShotModal({
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          {/* Modal Header remains the same */}
-
           <ScrollView style={styles.scrollContent}>
-            {/* Time Input */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Time (seconds) *</Text>
               <TextInput
@@ -120,7 +133,6 @@ export default function AddShotModal({
               />
             </View>
 
-            {/* Weight Input */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Weight (grams) *</Text>
               <TextInput
@@ -132,7 +144,6 @@ export default function AddShotModal({
               />
             </View>
 
-            {/* Dose Input */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Dose (grams) *</Text>
               <TextInput
@@ -144,7 +155,6 @@ export default function AddShotModal({
               />
             </View>
 
-            {/* Machine Picker */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Machine</Text>
               <View style={styles.pickerContainer}>
@@ -164,7 +174,6 @@ export default function AddShotModal({
               </View>
             </View>
 
-            {/* Grinder Picker */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Grinder</Text>
               <View style={styles.pickerContainer}>
@@ -210,6 +219,12 @@ export default function AddShotModal({
             onPress={handleSave}
           >
             <Text style={styles.saveButtonText}>Save Shot</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.cancelButton}
+            onPress={handleCancel}
+          >
+            <Text style={styles.saveButtonText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -272,10 +287,17 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: '#007AFF',
-    padding: 16,
+    padding: 12,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 15,
+  },
+  cancelButton: {
+    backgroundColor: 'grey',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
   },
   saveButtonText: {
     color: 'white',
