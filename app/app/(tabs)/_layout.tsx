@@ -7,7 +7,6 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { Box } from '@gluestack-ui/themed';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -39,6 +38,18 @@ export default function TabLayout() {
           ),
         }}
       />
+        <Tabs.Screen
+          name="graph"
+          options={{
+            title: 'Graph',
+            tabBarIcon: ({ color, focused }) => (
+              <View style={styles.tabContainer}>
+                <IconSymbol size={28} name="road.lanes.curved.right" color={color} />
+                <Text style={[styles.label, { color }]}>Graph</Text>
+              </View>
+            ),
+          }}
+        />
       <Tabs.Screen
         name="explore"
         options={{
