@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Dimensions, StyleSheet } from 'react-native';
 import Svg, { Path, G, Line, Text } from 'react-native-svg';
 import * as d3 from 'd3';
+import { useBluetooth } from './BluetoothContext';
 
 interface DataPoint {
   time: number;
@@ -49,22 +50,25 @@ const getNextValues = (currentPressure: number, currentWeight: number, elapsedTi
     return { pressure: 0, weight: TARGET_WEIGHT };
   }
 };
-
 const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
   const [data, setData] = useState<DataPoint[]>([]);
-  const [xDomain, setXDomain] = useState([0, 50]);
   const animationFrameId = useRef<number>();
   const startTime = useRef<number>(0);
+  const xDomainRef = useRef([0, 60]);
+  const lastUpdateTime = useRef<number>(0);
 
-  // Dimensions and margins
+  const {
+    pressureValue,
+  } = useBluetooth()
+
   const SCREEN_WIDTH = Dimensions.get('window').width;
-  const margin = { top: 20, right: 50, bottom: 30, left: 50 };
-  const width = SCREEN_WIDTH - margin.left - margin.right;
-  const height = 450 - margin.top - margin.bottom;
+  const SCREEN_HEIGHT = Dimensions.get('window').height;
+  const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+  const width = SCREEN_HEIGHT - margin.left - margin.right - 200;
+  const height = 400 - margin.top - margin.bottom;
 
-  // Scales
   const xScale = d3.scaleLinear()
-    .domain(xDomain)
+    .domain(xDomainRef.current)
     .range([0, width]);
 
   const yPressureScale = d3.scaleLinear()
@@ -75,7 +79,6 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
     .domain([0, 80])
     .range([height, 0]);
 
-  // Line generators
   const pressureLine = d3.line<DataPoint>()
     .x(d => xScale(d.time))
     .y(d => yPressureScale(d.pressure))
@@ -93,7 +96,10 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
 
   useEffect(() => {
     if (isStarted) {
+      setData([]);
+      xDomainRef.current = [0, 60];
       startTime.current = Date.now();
+      lastUpdateTime.current = Date.now();
       updateGraph();
     } else {
       if (animationFrameId.current) {
@@ -119,7 +125,7 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
 
     const newDataPoint = {
       time: currentTime,
-      pressure,
+      pressure: pressureValue || 0,
       weight,
       flowRate: Math.max(0, flowRate)
     };
@@ -127,12 +133,14 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
     setData(prevData => {
       const newData = [...prevData, newDataPoint];
       
-      // Check if we need to rescale the x-axis
-      const maxTime = Math.max(...newData.map(d => d.time));
-      if (maxTime > xDomain[1]) {
-        // Increase the domain by 20%
-        const newMax = Math.ceil(maxTime * 1.2);
-        setXDomain([0, newMax]);
+      const now = Date.now();
+      if (now - lastUpdateTime.current > 500) {
+        const maxTime = Math.max(...newData.map(d => d.time));
+        if (maxTime > xDomainRef.current[1] * 0.8) {
+          xDomainRef.current = [0, Math.ceil(maxTime * 1.2)];
+          xScale.domain(xDomainRef.current);
+          lastUpdateTime.current = now;
+        }
       }
       
       return newData;
@@ -141,7 +149,6 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
     animationFrameId.current = requestAnimationFrame(updateGraph);
   };
 
-  // Generate x-axis ticks
   const xAxisTicks = xScale.ticks(10).map(tick => ({
     value: tick,
     xOffset: xScale(tick)
@@ -149,112 +156,120 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
 
   return (
     <View style={styles.container}>
-      <Svg width={SCREEN_WIDTH} height={600}>
-        <G transform={`translate(${margin.left},${margin.top})`}>
-          {/* X-axis with ticks */}
-          <Line
-            x1={0}
-            y1={height}
-            x2={width}
-            y2={height}
-            stroke="black"
-          />
-          {xAxisTicks.map(({ value, xOffset }) => (
-            <G key={`tick-${value}`}>
-              <Line
-                x1={xOffset}
-                y1={height}
-                x2={xOffset}
-                y2={height + 5}
-                stroke="black"
-              />
-              <Text
-                x={xOffset}
-                y={height + 20}
-                textAnchor="middle"
-                fontSize={10}
-              >
-                {value}
-              </Text>
-            </G>
-          ))}
+      <View style={styles.graphWrapper}>
+        <Svg width={SCREEN_HEIGHT} height={500}>
+          <G transform={`translate(${margin.left},${margin.top})`}>
+            <Line
+              x1={0}
+              y1={height}
+              x2={width}
+              y2={height}
+              stroke="black"
+            />
+            {xAxisTicks.map(({ value, xOffset }) => (
+              <G key={`tick-${value}`}>
+                <Line
+                  x1={xOffset}
+                  y1={height}
+                  x2={xOffset}
+                  y2={height + 5}
+                  stroke="black"
+                />
+                <Text
+                  x={xOffset}
+                  y={height + 20}
+                  textAnchor="middle"
+                  fontSize={10}
+                >
+                  {value}
+                </Text>
+              </G>
+            ))}
 
-          {/* Y-axes */}
-          <Line
-            x1={0}
-            y1={0}
-            x2={0}
-            y2={height}
-            stroke="black"
-          />
-          <Line
-            x1={width}
-            y1={0}
-            x2={width}
-            y2={height}
-            stroke="black"
-          />
+            {/* Y-axes */}
+            <Line
+              x1={0}
+              y1={0}
+              x2={0}
+              y2={height}
+              stroke="black"
+            />
+            <Line
+              x1={width}
+              y1={0}
+              x2={width}
+              y2={height}
+              stroke="black"
+            />
 
-          {/* Data lines */}
-          <Path
-            d={pressureLine(data) || ''}
-            stroke="red"
-            strokeWidth={2}
-            fill="none"
-          />
-          <Path
-            d={weightLine(data) || ''}
-            stroke="blue"
-            strokeWidth={2}
-            fill="none"
-          />
-          <Path
-            d={flowRateLine(data) || ''}
-            stroke="green"
-            strokeWidth={2}
-            fill="none"
-          />
+            {/* Data lines */}
+            <Path
+              d={pressureLine(data) || ''}
+              stroke="red"
+              strokeWidth={2}
+              fill="none"
+            />
+            <Path
+              d={weightLine(data) || ''}
+              stroke="blue"
+              strokeWidth={2}
+              fill="none"
+            />
+            <Path
+              d={flowRateLine(data) || ''}
+              stroke="green"
+              strokeWidth={2}
+              fill="none"
+            />
 
-          {/* Axis labels */}
-          <Text
-            x={width / 2}
-            y={height + 35}
-            textAnchor="middle"
-            fill="black"
-          >
-            Time (seconds)
-          </Text>
-          <Text
-            x={-height / 2}
-            y={-35}
-            textAnchor="middle"
-            transform={`rotate(-90)`}
-            fill="black"
-          >
-            Pressure (bar)
-          </Text>
-          <Text
-            x={width + height / 2}
-            y={-35}
-            textAnchor="middle"
-            transform={`rotate(90, ${width}, 0)`}
-            fill="black"
-          >
-            Weight (g)
-          </Text>
-        </G>
-      </Svg>
+            {/* Axis labels */}
+            <Text
+              x={width / 2}
+              y={height + 25}
+              textAnchor="middle"
+              fill="black"
+            >
+              Time (seconds)
+            </Text>
+            <Text
+              x={-height / 2}
+              y={-35}
+              textAnchor="middle"
+              transform={`rotate(-90)`}
+              fill="black"
+            >
+              Pressure (bar)
+            </Text>
+            <Text
+              x={width + height / 2}
+              y={-35}
+              textAnchor="middle"
+              transform={`rotate(90, ${width}, 0)`}
+              fill="black"
+            >
+              Weight (g)
+            </Text>
+          </G>
+        </Svg>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: '#fff',
-    height: 600,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center'
+    bottom: 150,
+    right: 110
+  },
+  graphWrapper: {
+    transform: [{ rotate: '90deg' }],
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
+    position: 'absolute',
+    right: Dimensions.get('window').width / 3,
+    top: 0,
   }
 });
 
