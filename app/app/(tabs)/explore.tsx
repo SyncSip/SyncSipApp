@@ -20,15 +20,17 @@ import AddShotModal from '@/components/AddShotModal';
 import { grindersApi } from '@/api/grinders';
 import { machinesApi } from '@/api/machines';
 import { beansApi } from '@/api/beans';
+import ShotDetailsModal from '@/components/ShotDetailsModal';
 
 type ShotListItemProps = {
   shot: ReadShotDto;
   onToggleStar: (id: string, starred: boolean) => void;
   onViewDetails: (shot: ReadShotDto) => void;
   onUseAsReference: (shot: ReadShotDto) => void;
+  onEdit: (shot: ReadShotDto) => void
 };
 
-const ShotListItem = ({ shot, onToggleStar, onViewDetails, onUseAsReference }: ShotListItemProps) => {
+const ShotListItem = ({ shot, onToggleStar, onViewDetails, onUseAsReference, onEdit }: ShotListItemProps) => {
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
@@ -62,6 +64,13 @@ const ShotListItem = ({ shot, onToggleStar, onViewDetails, onUseAsReference }: S
           </Text>
         </View>
 
+        <View style={styles.detail}>
+          <Text style={styles.label}>{shot.customFields? `${shot.customFields[0].key}` : ""}</Text>
+          <Text style={styles.value}>
+            {shot.customFields ? `${shot.customFields[0].value}` : 'N/A'}
+          </Text>
+        </View>
+
         <View style={styles.statsContainer}>
           <View style={styles.stat}>
             <Text style={styles.statLabel}>Time</Text>
@@ -83,18 +92,24 @@ const ShotListItem = ({ shot, onToggleStar, onViewDetails, onUseAsReference }: S
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
+            style={[styles.button, styles.editButton]}
+            onPress={() => onEdit(shot)}
+          >
+            <Text style={[styles.buttonText, styles.referenceButtonText]}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
             style={styles.button}
             onPress={() => onViewDetails(shot)}
           >
             <Text style={styles.buttonText}>Details</Text>
           </TouchableOpacity>
+        </View>
           <TouchableOpacity 
             style={[styles.button, styles.referenceButton]}
             onPress={() => onUseAsReference(shot)}
           >
             <Text style={[styles.buttonText, styles.referenceButtonText]}>Use as Reference</Text>
           </TouchableOpacity>
-        </View>
       </View>
     </View>
   );
@@ -113,6 +128,10 @@ export default function ShotListScreen() {
     beans: [],
     timeRange: { min: 0, max: 100 },
   });
+
+  const [isDetailsModalVisible, setIsDetailsModalVisible] = useState<boolean>(false)
+  const [selectedShot, setSelectedShot] = useState<ReadShotDto>()
+  const [editShot, setEditShot] = useState<boolean>(false)
 
   const [addShotModalVisible, setAddShotModalVisible] = useState<boolean>(false)
   const [machines, setMachines] = useState<ReadMachineDto[]>([]);
@@ -149,7 +168,6 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
           beansApi.getAll(userId),
         ]);
   
-        // Set all the data
         const sortedShots = shotsData.sort((a, b) => 
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
@@ -179,7 +197,6 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
           beansApi.getAll(userId),
         ]);
   
-        // Set all the data
         const sortedShots = shotsData.sort((a, b) => 
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
@@ -209,13 +226,27 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
     }
   };
 
+  const onEdit = (shot: ReadShotDto) => {
+    setSelectedShot(shot);
+    setEditShot(true);
+    setTimeout(() => {
+      setAddShotModalVisible(true);
+    }, 0);
+  };
+  
+  const handleCloseModal = () => {
+    setAddShotModalVisible(false);
+    setTimeout(() => {
+      setEditShot(false);
+      setSelectedShot(undefined);
+    }, 300);
+  };
   const handleViewDetails = (shot: ReadShotDto) => {
-    // Navigate to details screen or show details modal
-    console.log('View details for shot:', shot.id);
+    setIsDetailsModalVisible(true)
+    setSelectedShot(shot)
   };
 
   const handleUseAsReference = (shot: ReadShotDto) => {
-    // Handle reference shot logic
     console.log('Use as reference shot:', shot.id);
   };
 
@@ -266,8 +297,6 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
       throw error;
     }
   };
-  
-  
 
   if (loading) {
     return (
@@ -295,30 +324,35 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
         currentFilters={filterOptions}
       />
 
-  <AddShotModal
-      visible={addShotModalVisible}
-      onClose={() => setAddShotModalVisible(false)}
-      onSave={handleSaveShot}
-      machines={machines}
-      grinders={grinders}
-      beans={beans}
+<AddShotModal
+  key={`${selectedShot?.id || 'new'}-${addShotModalVisible}`}
+  visible={addShotModalVisible}
+  onClose={handleCloseModal}
+  onSave={handleSaveShot}
+  machines={machines}
+  grinders={grinders}
+  beans={beans}
+  edit={editShot}
+  shot={selectedShot}
+/>
+    <ShotDetailsModal
+      visible={isDetailsModalVisible}
+      onClose={() => setIsDetailsModalVisible(false)}
+      shot={selectedShot}
     />
 
-      
-      <View style={styles.header}>
-
-        <Button 
-          title="Filter" 
-          onPress={() => setIsModalVisible(true)} 
-          />
-        <View style={styles.headerButtons}>
-        <Button 
-          title="+" 
-          onPress={() => setAddShotModalVisible(true)} 
-          />
-          </View>
-
-      </View>
+<View style={styles.header}>
+  <Button 
+    title="Filter" 
+    onPress={() => setIsModalVisible(true)} 
+  />
+  <View style={styles.headerButtons}>
+    <Button 
+      title="+" 
+      onPress={() => setAddShotModalVisible(true)} 
+    />
+  </View>
+</View>
       <FlatList
         data={getFilteredShots()}
         keyExtractor={(item) => item.id}
@@ -328,6 +362,7 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
             onToggleStar={handleToggleStar}
             onViewDetails={handleViewDetails}
             onUseAsReference={handleUseAsReference}
+            onEdit={onEdit}
           />
         )}
         contentContainerStyle={styles.listContainer}
@@ -352,8 +387,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-  },
-  header: {
   },
   centerContainer: {
     flex: 1,
@@ -467,11 +500,21 @@ const styles = StyleSheet.create({
   referenceButton: {
     backgroundColor: '#6F4E37',
   },
+  editButton: {
+    backgroundColor: '#c99b9d',
+  },
   referenceButtonText: {
     color: 'white',
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 0,
+  },
   headerButtons: {
-    left: '40%',
-    bottom: '51%'
+    position: 'absolute',
+    right: 16,
+    top: 0,
   }
 });
