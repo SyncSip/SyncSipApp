@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsUUID, IsNumber, IsBoolean, IsObject, Min, IsOptional, IsDate, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsNumber, IsBoolean, IsObject, Min, IsOptional, IsDate, ValidateNested, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
+import { CustomField } from 'src/data/entities/shot.entity/shot.entity';
 
 export class ReadMachineDto {
   @IsUUID()
@@ -243,6 +244,32 @@ export class ReadShotDto {
     example: new Date(),
   })
   updatedAt: Date;
+
+  @IsArray()
+  @ApiProperty({
+    description: 'Custom Fields for other infos for the user',
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        key: {
+          type: 'string',
+          example: "Top-Note"
+        },
+        value: {
+          type: 'string',
+          example: "floral"
+        }
+      }
+    },
+    example: [
+      { key: "Top-Note", value: "floral" },
+      { key: "Heart-Note", value: "fruity" },
+      { key: "Bottom-Note", value: "tangy" },
+    ],
+    nullable: true
+  })
+  customFields: CustomField[]
 }
 
 export class CreateShotDto {
@@ -352,6 +379,32 @@ export class CreateShotDto {
     type: 'boolean',
   })
   starred: boolean;
+
+  @IsArray()
+  @ApiProperty({
+    description: 'Custom Fields for other infos for the user',
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        key: {
+          type: 'string',
+          example: "Top-Note"
+        },
+        value: {
+          type: 'string',
+          example: "floral"
+        }
+      }
+    },
+    example: [
+      { key: "Top-Note", value: "floral" },
+      { key: "Heart-Note", value: "fruity" },
+      { key: "Bottom-Note", value: "tangy" },
+    ],
+    nullable: true
+  })
+  customFields: CustomField[]
 }
 
 export class EditShotDto {
@@ -463,6 +516,32 @@ export class EditShotDto {
     type: 'boolean',
   })
   starred?: boolean;
+
+  @IsArray()
+  @ApiProperty({
+    description: 'Custom Fields for other infos for the user',
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        key: {
+          type: 'string',
+          example: "Top-Note"
+        },
+        value: {
+          type: 'string',
+          example: "floral"
+        }
+      }
+    },
+    example: [
+      { key: "Top-Note", value: "floral" },
+      { key: "Heart-Note", value: "fruity" },
+      { key: "Bottom-Note", value: "tangy" },
+    ],
+    nullable: true
+  })
+  customFields: CustomField[]
 }
 
 export class DeleteShotDto {
