@@ -1,5 +1,4 @@
-// src/components/AddShotModal.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Modal,
@@ -11,7 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { ReadMachineDto, ReadGrinderDto, ReadBeanDto, CreateShotDto } from '@/api/generated';
+import { ReadMachineDto, ReadGrinderDto, ReadBeanDto, CreateShotDto, ReadShotDto } from '@/api/generated';
+import KeyValueInput from './KeyValue';
 
 type AddShotModalProps = {
   visible: boolean;
@@ -20,7 +20,14 @@ type AddShotModalProps = {
   machines: ReadMachineDto[];
   grinders: ReadGrinderDto[];
   beans: ReadBeanDto[];
+  edit?: boolean,
+  shot?: ReadShotDto
 };
+
+interface keyValueInput {
+  key: string,
+  value: string
+}
 
 export default function AddShotModal({
   visible,
@@ -29,6 +36,8 @@ export default function AddShotModal({
   machines,
   grinders,
   beans,
+  edit,
+  shot
 }: AddShotModalProps) {
   const [shotData, setShotData] = useState<CreateShotDto>({
     time: 0,
@@ -40,8 +49,57 @@ export default function AddShotModal({
     userId: '',
     graphData: {},
     group: '',
-    starred: false
+    starred: false,
+    customFields: null
   });
+
+useEffect(() => {
+  if (!visible) {
+    setShotData({
+      time: 0,
+      weight: 0,
+      dose: 0,
+      machineId: '',
+      grinderId: '',
+      beansId: '',
+      userId: '',
+      graphData: {},
+      group: '',
+      starred: false,
+      customFields: null
+    });
+    setIndieFields([]);
+  } else if (edit && shot) {
+    setShotData({
+      time: shot.time,
+      weight: shot.weight,
+      dose: shot.dose,
+      machineId: shot.machine?.id || '',
+      grinderId: shot.grinder?.id || '',
+      beansId: shot.beans?.id || '',
+      userId: shot.userId,
+      graphData: shot.graphData || {},
+      group: shot.group || '',
+      starred: shot.starred || false,
+      customFields: shot.customFields || null
+    });
+    if (shot.customFields) {
+        setIndieFields(shot.customFields);
+    }
+  }
+}, [visible, edit, shot]);
+
+  const [key, setKey] = useState('');
+  const [value, setValue] = useState('');
+  const [indieFields, setIndieFields] = useState<keyValueInput[]>([]);
+
+  const handleAddField = () => {
+    if (key && value) {
+      setIndieFields([...indieFields, { key, value }]);
+      setKey('');
+      setValue('');
+    }
+  };
 
   const handleSave = async () => {
     if (!shotData.time || !shotData.weight || !shotData.dose) {
@@ -50,7 +108,6 @@ export default function AddShotModal({
     }
   
     try {
-      // Ensure all number fields are actually numbers
       const formattedData: CreateShotDto = {
         ...shotData,
         time: Number(shotData.time),
@@ -61,7 +118,8 @@ export default function AddShotModal({
         beansId: shotData.beansId || '',
         graphData: shotData.graphData || {},
         group: shotData.group || 'lol',
-        starred: false
+        starred: false,
+        customFields: indieFields || null
       };
   
       console.log('Sending shot data:', formattedData);
@@ -77,7 +135,8 @@ export default function AddShotModal({
         userId: '',
         graphData: {},
         group: '',
-        starred: false
+        starred: false,
+        customFields: null
       });
       onClose();
     } catch (error: any) {
@@ -92,20 +151,9 @@ export default function AddShotModal({
   };
 
   const handleCancel = () => {
-    setShotData({
-      time: 0,
-      weight: 0,
-      dose: 0,
-      machineId: '',
-      grinderId: '',
-      beansId: '',
-      userId: '',
-      graphData: {},
-      group: '',
-      starred: false
-    });
-    onClose()
-  }
+    onClose();
+  };
+  
 
   const handleNumberInput = (value: string, field: 'time' | 'weight' | 'dose') => {
     const numberValue = parseFloat(value) || 0;
@@ -193,7 +241,6 @@ export default function AddShotModal({
               </View>
             </View>
 
-            {/* Beans Picker */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Beans</Text>
               <View style={styles.pickerContainer}>
@@ -212,13 +259,46 @@ export default function AddShotModal({
                 </Picker>
               </View>
             </View>
+            <View>
+              <Text style={styles.label}>Custom Fields</Text>
+              <KeyValueInput
+                keyValue={key}
+                setKeyValue={setKey}
+                valueValue={value}
+                setValueValue={setValue}
+                onAddField={handleAddField}
+              />
+<View style={styles.keyValueList}>
+  {indieFields.map((field, index) => (
+    <View key={index} style={styles.keyValueItem}>
+      <View style={styles.keyValueContent}>
+        <Text style={styles.keyValueText}>{field.key}: {field.value}</Text>
+      </View>
+      <TouchableOpacity 
+        style={styles.deleteButton}
+        onPress={() => {
+          const newFields = indieFields.filter((_, i) => i !== index);
+          setIndieFields(newFields);
+        }}
+      >
+        <Text style={styles.deleteButtonText}>×</Text>
+      </TouchableOpacity>
+    </View>
+  ))}
+</View>
+            </View>
           </ScrollView>
 
           <TouchableOpacity 
             style={styles.saveButton}
             onPress={handleSave}
           >
-            <Text style={styles.saveButtonText}>Save Shot</Text>
+            {edit == true && (
+              <Text>Save Shot</Text>
+            )}
+            {edit == false && (
+              <Text>Create Shot</Text>
+            )}
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.cancelButton}
@@ -304,4 +384,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  keyValueList: {
+    marginTop: 10,
+  },
+  keyValueItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 8,
+  },
+  keyValueContent: {
+    flex: 1,
+  },
+  keyValueText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  deleteButton: {
+    backgroundColor: '#ff4444',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  }
+  
 });
