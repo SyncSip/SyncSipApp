@@ -12,6 +12,11 @@ import { Machine } from '../machine.entity/machine.entity';
 import { Grinder } from '../grinder.entity/grinder.entity';
 import { Bean } from '../beans.entity/beans.entity';
 
+export interface CustomField {
+  key: string,
+  value: string
+}
+
 @Entity('shots')
 export class Shot {
   @PrimaryGeneratedColumn('uuid')
@@ -52,6 +57,9 @@ export class Shot {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @Column("jsonb", {nullable: true})
+  customFields: CustomField[]
 
   @ManyToOne(() => User, (user) => user.shots)
   @JoinColumn({ name: 'userId' })
