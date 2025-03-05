@@ -1,42 +1,33 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { LoginDto } from '../dto/login.dto';
-import { UserResponseDto } from 'src/dto/user-response.dto';
+import { RefreshDto, UserResponseDto } from 'src/dto/user-response.dto';
+import { LocalStrategy } from './local.strategy';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register')
-  @ApiOperation({ summary: 'Register a new user' })
-  @ApiBody({ type: CreateUserDto })
-  @ApiResponse({
-    status: 201,
-    description: 'User successfully registered',
-    type: UserResponseDto,
-  })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async register(
-    @Body() createUserDto: CreateUserDto,
-  ): Promise<UserResponseDto> {
-    return this.authService.register(createUserDto);
+  @UseGuards(LocalStrategy)
+  @Post('/login')
+  async login(@Body() body: {username: string, password: string}) {
+    const login = await this.authService.login(body.username, body.password);
+    console.log(login)
+    return login
   }
 
-  @Post('login')
-  @ApiOperation({ summary: 'Login user' })
-  @ApiBody({ type: LoginDto })
-  @ApiResponse({
-    status: 200,
-    description: 'User successfully logged in',
-    type: UserResponseDto,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async login(@Body() loginDto: LoginDto): Promise<UserResponseDto> {
-    return this.authService.login(loginDto);
+  @UseGuards(LocalStrategy)
+  @Post('/refresh')
+  async refreshTokens(@Body() body: RefreshDto) {
+    return this.authService.refreshTokens(body.id, body.refreshToken);
+  }
+
+  @Post('/logout')
+  async logout(@Body() body: RefreshDto) {
+    await this.authService.logout(body.id);
+    return { message: 'Logged out successfully' };
   }
 }
