@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { ReadMachineDto, ReadGrinderDto, ReadBeanDto, CreateShotDto, ReadShotDto } from '@/api/generated';
+import { ReadMachineDto, ReadGrinderDto, ReadBeanDto, CreateShotDto, ReadShotDto, EditShotDto } from '@/api/generated';
 import KeyValueInput from './KeyValue';
 
 type AddShotModalProps = {
@@ -20,6 +20,7 @@ type AddShotModalProps = {
   machines: ReadMachineDto[];
   grinders: ReadGrinderDto[];
   beans: ReadBeanDto[];
+  handleEdit: (shotData: EditShotDto, id: string) => Promise<void>
   edit?: boolean,
   shot?: ReadShotDto
 };
@@ -37,7 +38,8 @@ export default function AddShotModal({
   grinders,
   beans,
   edit,
-  shot
+  shot,
+  handleEdit
 }: AddShotModalProps) {
   const [shotData, setShotData] = useState<CreateShotDto>({
     time: 0,
@@ -123,7 +125,12 @@ useEffect(() => {
       };
   
       console.log('Sending shot data:', formattedData);
-      await onSave(formattedData);
+      if(edit===false){
+        await onSave(formattedData);
+      }
+      if(edit === true && shot){
+        await handleEdit(formattedData, shot.id)
+      }
       
       setShotData({
         time: 0,
@@ -206,19 +213,19 @@ useEffect(() => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Machine</Text>
               <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={shotData.machineId}
-                  onValueChange={(value: string) => setShotData(prev => ({ ...prev, machineId: value }))}
-                >
-                  <Picker.Item label="Select a machine" value="" />
-                  {machines.map((machine) => (
-                    <Picker.Item
-                      key={machine.id}
-                      label={`${machine.brandName} ${machine.model}`}
-                      value={machine.id}
-                    />
-                  ))}
-                </Picker>
+              <Picker
+  selectedValue={shotData.machineId}
+  onValueChange={(value: string) => setShotData(prev => ({ ...prev, machineId: value }))}
+>
+  <Picker.Item key="machine-default" label="Select a machine" value="" />
+  {machines.map((machine) => (
+    <Picker.Item
+      key={`machine-${machine.id}`}
+      label={`${machine.brandName} ${machine.model}`}
+      value={machine.id}
+    />
+  ))}
+</Picker>
               </View>
             </View>
 
@@ -229,14 +236,14 @@ useEffect(() => {
                   selectedValue={shotData.grinderId}
                   onValueChange={(value: string) => setShotData(prev => ({ ...prev, grinderId: value }))}
                 >
-                  <Picker.Item label="Select a grinder" value="" />
-                  {grinders.map((grinder) => (
-                    <Picker.Item
-                      key={grinder.id}
-                      label={`${grinder.brandName} ${grinder.model}`}
-                      value={grinder.id}
-                    />
-                  ))}
+<Picker.Item key="grinder-default" label="Select a grinder" value="" />
+{grinders.map((grinder) => (
+  <Picker.Item
+    key={`grinder-${grinder.id}`}
+    label={`${grinder.brandName} ${grinder.model}`}
+    value={grinder.id}
+  />
+))}
                 </Picker>
               </View>
             </View>
@@ -248,14 +255,14 @@ useEffect(() => {
                   selectedValue={shotData.beansId}
                   onValueChange={(value: string) => setShotData(prev => ({ ...prev, beansId: value }))}
                 >
-                  <Picker.Item label="Select beans" value="" />
-                  {beans.map((bean) => (
-                    <Picker.Item
-                      key={bean.id}
-                      label={`${bean.roastery} - ${bean.bean}`}
-                      value={bean.id}
-                    />
-                  ))}
+<Picker.Item key="beans-default" label="Select beans" value="" />
+{beans.map((bean) => (
+  <Picker.Item
+    key={`bean-${bean.id}`}
+    label={`${bean.roastery} - ${bean.bean}`}
+    value={bean.id}
+  />
+))}
                 </Picker>
               </View>
             </View>
@@ -270,7 +277,7 @@ useEffect(() => {
               />
 <View style={styles.keyValueList}>
   {indieFields.map((field, index) => (
-    <View key={index} style={styles.keyValueItem}>
+    <View key={`custom-field-${index}-${field.key}`} style={styles.keyValueItem}>
       <View style={styles.keyValueContent}>
         <Text style={styles.keyValueText}>{field.key}: {field.value}</Text>
       </View>
