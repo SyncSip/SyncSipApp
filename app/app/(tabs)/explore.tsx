@@ -1,4 +1,3 @@
-// src/screens/ShotListScreen.tsx
 import React, { useEffect, useState } from 'react';
 import { 
   View, 
@@ -9,7 +8,8 @@ import {
   RefreshControl, 
   Button,
   Modal,
-  TouchableOpacity
+  TouchableOpacity,
+  Alert
 } from 'react-native';
 import { format } from 'date-fns';
 import { CreateShotDto, ReadBeanDto, ReadGrinderDto, ReadMachineDto, ReadShotDto } from '@/api/generated';
@@ -21,6 +21,8 @@ import { grindersApi } from '@/api/grinders';
 import { machinesApi } from '@/api/machines';
 import { beansApi } from '@/api/beans';
 import ShotDetailsModal from '@/components/ShotDetailsModal';
+import LoginModal from '@/components/LoginModal';
+import { useAuth } from '@/components/AuthContext';
 
 type ShotListItemProps = {
   shot: ReadShotDto;
@@ -129,18 +131,41 @@ export default function ShotListScreen() {
     timeRange: { min: 0, max: 100 },
   });
 
-  const [isDetailsModalVisible, setIsDetailsModalVisible] = useState<boolean>(false)
-  const [selectedShot, setSelectedShot] = useState<ReadShotDto>()
-  const [editShot, setEditShot] = useState<boolean>(false)
+  const [isDetailsModalVisible, setIsDetailsModalVisible] = useState<boolean>(false);
+  const [selectedShot, setSelectedShot] = useState<ReadShotDto>();
+  const [editShot, setEditShot] = useState<boolean>(false);
 
-  const [addShotModalVisible, setAddShotModalVisible] = useState<boolean>(false)
+  const [addShotModalVisible, setAddShotModalVisible] = useState<boolean>(false);
   const [machines, setMachines] = useState<ReadMachineDto[]>([]);
-const [grinders, setGrinders] = useState<ReadGrinderDto[]>([]);
-const [beans, setBeans] = useState<ReadBeanDto[]>([]);
+  const [grinders, setGrinders] = useState<ReadGrinderDto[]>([]);
+  const [beans, setBeans] = useState<ReadBeanDto[]>([]);
+  
+  const { isAuthenticated, userId, login, logout, loading: authLoading } = useAuth();
+  
+  const [isLoginModalVisible, setIsLoginModalVisible] = useState(!isAuthenticated && !authLoading);
 
-  const userId = "2f5bed92-fe84-45db-ad56-4a2fcf120fcf";
+  const handleLoginSuccess = async () => {
+    setIsLoginModalVisible(false);
+    handleRefresh();
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setShots([]);
+      setMachines([]);
+      setGrinders([]);
+      setBeans([]);
+      setIsLoginModalVisible(true);
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to log out. Please try again.');
+    }
+  };
 
   const fetchShots = async () => {
+    if (!isAuthenticated || !userId) return;
+    
     try {
       setError(null);
       const data = await shotsApi.getAll(userId);
@@ -159,6 +184,11 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!isAuthenticated || !userId) {
+        setLoading(false);
+        return;
+      }
+      
       try {
         setLoading(true);
         const [shotsData, machinesData, grindersData, beansData] = await Promise.all([
@@ -184,9 +214,17 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
     };
   
     fetchData();
-  }, [userId]);
+  }, [isAuthenticated, userId]);
+
+  useEffect(() => {
+    if (!authLoading) {
+      setIsLoginModalVisible(!isAuthenticated);
+    }
+  }, [isAuthenticated, authLoading]);
 
   const handleRefresh = () => {
+    if (!isAuthenticated || !userId) return;
+    
     setRefreshing(true);
     const fetchData = async () => {
       try {
@@ -216,6 +254,7 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
   };
 
   const handleToggleStar = async (id: string, starred: boolean) => {
+    if (!isAuthenticated || !userId) return;
     try {
       await shotsApi.edit(id, { starred });
       setShots(shots.map(shot => 
@@ -227,6 +266,11 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
   };
 
   const onEdit = (shot: ReadShotDto) => {
+    if (!isAuthenticated) {
+      setIsLoginModalVisible(true);
+      return;
+    }
+    
     setSelectedShot(shot);
     setEditShot(true);
     setTimeout(() => {
@@ -242,12 +286,15 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
     }, 300);
   };
   const handleViewDetails = (shot: ReadShotDto) => {
-    setIsDetailsModalVisible(true)
-    setSelectedShot(shot)
+    setIsDetailsModalVisible(true);
+    setSelectedShot(shot);
   };
 
   const handleUseAsReference = (shot: ReadShotDto) => {
-    console.log('Use as reference shot:', shot.id);
+    if (!isAuthenticated) {
+      setIsLoginModalVisible(true);
+      return;
+    }
   };
 
   const getFilteredShots = () => {
@@ -282,14 +329,34 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
   };
 
   const handleSaveShot = async (shotData: CreateShotDto) => {
+    if (!isAuthenticated || !userId) {
+      setIsLoginModalVisible(true);
+      return;
+    }
+    
     try {
-      console.log('Received shot data:', shotData);
-      console.log(shotData)
       const newShot = await shotsApi.create({
         ...shotData,
         userId,
       });
-      console.log('Created new shot:', newShot);
+      setShots(prev => [newShot, ...prev]);
+      setAddShotModalVisible(false);
+    } catch (error:any) {
+      console.error('Server error:', error.response?.data || error);
+      throw error;
+    }
+  };
+  
+  const handleEditShot = async (shotData: CreateShotDto, id: string) => {
+    if (!isAuthenticated || !userId) {
+      setIsLoginModalVisible(true);
+      return;
+    }
+    
+    try {
+      const newShot = await shotsApi.edit(id, {
+        ...shotData,
+      });
       setShots(prev => [newShot, ...prev]);
       setAddShotModalVisible(false);
     } catch (error:any) {
@@ -298,18 +365,29 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" />
+        <Text style={styles.loadingText}>Checking authentication...</Text>
       </View>
     );
   }
 
-  if (error) {
+  if (loading && isAuthenticated) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.loadingText}>Loading your shots...</Text>
+      </View>
+    );
+  }
+
+  if (error && isAuthenticated) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>{error}</Text>
+        <Button title="Try Again" onPress={handleRefresh} />
       </View>
     );
   }
@@ -324,61 +402,106 @@ const [beans, setBeans] = useState<ReadBeanDto[]>([]);
         currentFilters={filterOptions}
       />
 
-<AddShotModal
-  key={`${selectedShot?.id || 'new'}-${addShotModalVisible}`}
-  visible={addShotModalVisible}
-  onClose={handleCloseModal}
-  onSave={handleSaveShot}
-  machines={machines}
-  grinders={grinders}
-  beans={beans}
-  edit={editShot}
-  shot={selectedShot}
-/>
-    <ShotDetailsModal
-      visible={isDetailsModalVisible}
-      onClose={() => setIsDetailsModalVisible(false)}
-      shot={selectedShot}
-    />
+      <LoginModal
+        visible={isLoginModalVisible}
+        onClose={() => setIsLoginModalVisible(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
+      <AddShotModal
+        key={`modal-${selectedShot?.id || 'new'}-${Date.now()}`}
+        visible={addShotModalVisible}
+        onClose={handleCloseModal}
+        onSave={handleSaveShot}
+        machines={machines}
+        grinders={grinders}
+        beans={beans}
+        edit={editShot}
+        shot={selectedShot}
+        handleEdit={handleEditShot}
+      />
+
+      <ShotDetailsModal
+        visible={isDetailsModalVisible}
+        onClose={() => setIsDetailsModalVisible(false)}
+        shot={selectedShot}
+      />
 
 <View style={styles.header}>
-  <Button 
-    title="Filter" 
-    onPress={() => setIsModalVisible(true)} 
-  />
-  <View style={styles.headerButtons}>
+  <View style={styles.headerLeft}>
+    <Button 
+      title="Filter" 
+      onPress={() => setIsModalVisible(true)} 
+      disabled={!isAuthenticated || shots.length === 0}
+    />
+  </View>
+  
+  <View style={styles.headerCenter}>
+    {isAuthenticated ? (
+      <Button 
+        title="Logout" 
+        onPress={handleLogout} 
+        color="#ff6347"
+      />
+    ) : (
+      <Button 
+        title="Login" 
+        onPress={() => setIsLoginModalVisible(true)} 
+      />
+    )}
+  </View>
+  
+  <View style={styles.headerRight}>
     <Button 
       title="+" 
-      onPress={() => setAddShotModalVisible(true)} 
+      onPress={() => isAuthenticated ? setAddShotModalVisible(true) : setIsLoginModalVisible(true)} 
     />
   </View>
 </View>
-      <FlatList
-        data={getFilteredShots()}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <ShotListItem 
-            shot={item} 
-            onToggleStar={handleToggleStar}
-            onViewDetails={handleViewDetails}
-            onUseAsReference={handleUseAsReference}
-            onEdit={onEdit}
+      
+      {isAuthenticated ? (
+        <FlatList
+          data={getFilteredShots()}
+          keyExtractor={(item) => `shot-${item.id}`}
+          renderItem={({ item }) => (
+            <ShotListItem 
+              shot={item} 
+              onToggleStar={handleToggleStar}
+              onViewDetails={handleViewDetails}
+              onUseAsReference={handleUseAsReference}
+              onEdit={onEdit}
+            />
+          )}
+          contentContainerStyle={styles.listContainer}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+            />
+          }
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No shots recorded yet</Text>
+              <Button 
+                title="Add Your First Shot" 
+                onPress={() => setAddShotModalVisible(true)}
+                style={styles.emptyButton}
+              />
+            </View>
+          )}
+        />
+      ) : (
+        <View style={styles.unauthenticatedContainer}>
+          <Text style={styles.unauthenticatedText}>
+            Please log in to view and manage your espresso shots
+          </Text>
+          <Button 
+            title="Log In" 
+            onPress={() => setIsLoginModalVisible(true)}
           />
-        )}
-        contentContainerStyle={styles.listContainer}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
-        }
-        ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No shots recorded yet</Text>
-          </View>
-        )}
-      />
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -516,5 +639,36 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     top: 0,
-  }
+  },
+  headerLeft: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerRight: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
+  },
+  unauthenticatedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  unauthenticatedText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  emptyButton: {
+    marginTop: 20,
+  },
 });
