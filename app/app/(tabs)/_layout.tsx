@@ -21,43 +21,45 @@ export default function TabLayout() {
         tabBarStyle: Platform.select({
           ios: {
             position: 'absolute',
+            height: 60,
+            paddingBottom: 10,
           },
-          default: {},
+          default: {
+            height: 70,
+            paddingBottom: 8,
+          },
         }),
         tabBarLabel: () => null,
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
           tabBarIcon: ({ color, focused }) => (
             <View style={styles.tabContainer}>
-              <IconSymbol size={28} name="house.fill" color={color} />
-              <Text style={[styles.label, { color }]}>Home</Text>
+              <IconSymbol size={28} name="wifi.circle" color={color} />
+              <Text style={[styles.label, { color }]}></Text>
             </View>
           ),
         }}
       />
-        <Tabs.Screen
-          name="graph"
-          options={{
-            title: 'Graph',
-            tabBarIcon: ({ color, focused }) => (
-              <View style={styles.tabContainer}>
-                <IconSymbol size={28} name="road.lanes.curved.right" color={color} />
-                <Text style={[styles.label, { color }]}>Graph</Text>
-              </View>
-            ),
-          }}
-        />
+      <Tabs.Screen
+        name="graph"
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <View style={styles.tabContainer}>
+              <IconSymbol size={28} name="chart.line.uptrend.xyaxis" color={color} />
+              <Text style={[styles.label, { color }]}></Text>
+            </View>
+          ),
+        }}
+      />
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
             <View style={styles.tabContainer}>
-              <IconSymbol size={28} name="paperplane.fill" color={color} />
-              <Text style={[styles.label, { color }]}>Shots</Text>
+              <IconSymbol size={28} name="drop.halffull" color={color} />
+              <Text style={[styles.label, { color }]}></Text>
             </View>
           ),
         }}
@@ -70,7 +72,8 @@ const styles = StyleSheet.create({
   tabContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 60,
+    height: 20,
+    paddingTop: Platform.OS === 'ios' ? 15 : 10
   },
   label: {
     marginTop: 4,
