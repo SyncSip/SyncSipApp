@@ -45,51 +45,51 @@ export default function AddShotModal({
     time: 0,
     weight: 0,
     dose: 0,
-    machineId: '',
-    grinderId: '',
-    beansId: '',
+    machineId: null,
+    grinderId: null,
+    beansId: null,
     userId: '',
-    graphData: {},
-    group: '',
+    graphData: [],
+    group: null,
     starred: false,
-    customFields: null
+    customFields: []
   });
 
-useEffect(() => {
-  if (!visible) {
-    setShotData({
-      time: 0,
-      weight: 0,
-      dose: 0,
-      machineId: '',
-      grinderId: '',
-      beansId: '',
-      userId: '',
-      graphData: {},
-      group: '',
-      starred: false,
-      customFields: null
-    });
-    setIndieFields([]);
-  } else if (edit && shot) {
-    setShotData({
-      time: shot.time,
-      weight: shot.weight,
-      dose: shot.dose,
-      machineId: shot.machine?.id || '',
-      grinderId: shot.grinder?.id || '',
-      beansId: shot.beans?.id || '',
-      userId: shot.userId,
-      graphData: shot.graphData || {},
-      group: shot.group || '',
-      starred: shot.starred || false,
-      customFields: shot.customFields || null
-    });
-    if (shot.customFields) {
+  useEffect(() => {
+    if (!visible) {
+      setShotData({
+        time: 0,
+        weight: 0,
+        dose: 0,
+        machineId: null,
+        grinderId: null,
+        beansId: null,
+        userId: '',
+        graphData: [],
+        group: null,
+        starred: false,
+        customFields: []
+      });
+      setIndieFields([]);
+    } else if (edit && shot) {
+      setShotData({
+        time: shot.time,
+        weight: shot.weight,
+        dose: shot.dose,
+        machineId: shot.machine?.id || null,
+        grinderId: shot.grinder?.id || null,
+        beansId: shot.beans?.id || null,
+        userId: shot.userId,
+        graphData: shot.graphData || [],
+        group: shot.group || null,
+        starred: shot.starred || false,
+        customFields: shot.customFields || []
+      });
+      if (shot.customFields && Array.isArray(shot.customFields)) {
         setIndieFields(shot.customFields);
+      }
     }
-  }
-}, [visible, edit, shot]);
+  }, [visible, edit, shot]);
 
   const [key, setKey] = useState('');
   const [value, setValue] = useState('');
@@ -115,35 +115,34 @@ useEffect(() => {
         time: Number(shotData.time),
         weight: Number(shotData.weight),
         dose: Number(shotData.dose),
-        machineId: shotData.machineId || '',
-        grinderId: shotData.grinderId || '',
-        beansId: shotData.beansId || '',
-        graphData: shotData.graphData || {},
-        group: shotData.group || 'lol',
+        machineId: shotData.machineId || null,
+        grinderId: shotData.grinderId || null,
+        beansId: shotData.beansId || null,
+        graphData: Array.isArray(shotData.graphData) ? shotData.graphData : [],
+        group: shotData.group || null,
         starred: false,
-        customFields: indieFields || null
+        customFields: indieFields
       };
   
-      console.log('Sending shot data:', formattedData);
-      if(edit===false){
+      
+      if(edit === false) {
         await onSave(formattedData);
-      }
-      if(edit === true && shot){
-        await handleEdit(formattedData, shot.id)
+      } else if(edit === true && shot) {
+        await handleEdit(formattedData, shot.id);
       }
       
       setShotData({
         time: 0,
         weight: 0,
         dose: 0,
-        machineId: '',
-        grinderId: '',
-        beansId: '',
+        machineId: null,
+        grinderId: null,
+        beansId: null,
         userId: '',
-        graphData: {},
-        group: '',
+        graphData: [],
+        group: null,
         starred: false,
-        customFields: null
+        customFields: []
       });
       onClose();
     } catch (error: any) {
@@ -161,7 +160,6 @@ useEffect(() => {
     onClose();
   };
   
-
   const handleNumberInput = (value: string, field: 'time' | 'weight' | 'dose') => {
     const numberValue = parseFloat(value) || 0;
     setShotData(prev => ({ ...prev, [field]: numberValue }));
@@ -213,19 +211,19 @@ useEffect(() => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Machine</Text>
               <View style={styles.pickerContainer}>
-              <Picker
-  selectedValue={shotData.machineId}
-  onValueChange={(value: string) => setShotData(prev => ({ ...prev, machineId: value }))}
->
-  <Picker.Item key="machine-default" label="Select a machine" value="" />
-  {machines.map((machine) => (
-    <Picker.Item
-      key={`machine-${machine.id}`}
-      label={`${machine.brandName} ${machine.model}`}
-      value={machine.id}
-    />
-  ))}
-</Picker>
+                <Picker
+                  selectedValue={shotData.machineId}
+                  onValueChange={(value: string) => setShotData(prev => ({ ...prev, machineId: value }))}
+                >
+                  <Picker.Item key="machine-default" label="Select a machine" value="" />
+                  {machines.map((machine) => (
+                    <Picker.Item
+                      key={`machine-${machine.id}`}
+                      label={`${machine.brandName} ${machine.model}`}
+                      value={machine.id}
+                    />
+                  ))}
+                </Picker>
               </View>
             </View>
 
@@ -236,14 +234,14 @@ useEffect(() => {
                   selectedValue={shotData.grinderId}
                   onValueChange={(value: string) => setShotData(prev => ({ ...prev, grinderId: value }))}
                 >
-<Picker.Item key="grinder-default" label="Select a grinder" value="" />
-{grinders.map((grinder) => (
-  <Picker.Item
-    key={`grinder-${grinder.id}`}
-    label={`${grinder.brandName} ${grinder.model}`}
-    value={grinder.id}
-  />
-))}
+                  <Picker.Item key="grinder-default" label="Select a grinder" value="" />
+                  {grinders.map((grinder) => (
+                    <Picker.Item
+                      key={`grinder-${grinder.id}`}
+                      label={`${grinder.brandName} ${grinder.model}`}
+                      value={grinder.id}
+                    />
+                  ))}
                 </Picker>
               </View>
             </View>
@@ -255,14 +253,14 @@ useEffect(() => {
                   selectedValue={shotData.beansId}
                   onValueChange={(value: string) => setShotData(prev => ({ ...prev, beansId: value }))}
                 >
-<Picker.Item key="beans-default" label="Select beans" value="" />
-{beans.map((bean) => (
-  <Picker.Item
-    key={`bean-${bean.id}`}
-    label={`${bean.roastery} - ${bean.bean}`}
-    value={bean.id}
-  />
-))}
+                  <Picker.Item key="beans-default" label="Select beans" value="" />
+                  {beans.map((bean) => (
+                    <Picker.Item
+                      key={`bean-${bean.id}`}
+                      label={`${bean.roastery} - ${bean.bean}`}
+                      value={bean.id}
+                    />
+                  ))}
                 </Picker>
               </View>
             </View>
@@ -275,24 +273,24 @@ useEffect(() => {
                 setValueValue={setValue}
                 onAddField={handleAddField}
               />
-<View style={styles.keyValueList}>
-  {indieFields.map((field, index) => (
-    <View key={`custom-field-${index}-${field.key}`} style={styles.keyValueItem}>
-      <View style={styles.keyValueContent}>
-        <Text style={styles.keyValueText}>{field.key}: {field.value}</Text>
-      </View>
-      <TouchableOpacity 
-        style={styles.deleteButton}
-        onPress={() => {
-          const newFields = indieFields.filter((_, i) => i !== index);
-          setIndieFields(newFields);
-        }}
-      >
-        <Text style={styles.deleteButtonText}>×</Text>
-      </TouchableOpacity>
-    </View>
-  ))}
-</View>
+              <View style={styles.keyValueList}>
+                {indieFields.map((field, index) => (
+                  <View key={`custom-field-${index}-${field.key}`} style={styles.keyValueItem}>
+                    <View style={styles.keyValueContent}>
+                      <Text style={styles.keyValueText}>{field.key}: {field.value}</Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.deleteButton}
+                      onPress={() => {
+                        const newFields = indieFields.filter((_, i) => i !== index);
+                        setIndieFields(newFields);
+                      }}
+                    >
+                      <Text style={styles.deleteButtonText}>×</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
             </View>
           </ScrollView>
 
@@ -300,11 +298,10 @@ useEffect(() => {
             style={styles.saveButton}
             onPress={handleSave}
           >
-            {edit == true && (
-              <Text>Save Shot</Text>
-            )}
-            {edit == false && (
-              <Text>Create Shot</Text>
+            {edit === true ? (
+              <Text style={styles.saveButtonText}>Save Shot</Text>
+            ) : (
+              <Text style={styles.saveButtonText}>Create Shot</Text>
             )}
           </TouchableOpacity>
           <TouchableOpacity 
@@ -318,7 +315,6 @@ useEffect(() => {
     </Modal>
   );
 }
-
 
 const styles = StyleSheet.create({
   modalContainer: {
@@ -423,5 +419,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   }
-  
 });
