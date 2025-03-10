@@ -12,7 +12,7 @@ import {
   Alert
 } from 'react-native';
 import { format } from 'date-fns';
-import { CreateShotDto, ReadBeanDto, ReadGrinderDto, ReadMachineDto, ReadShotDto } from '@/api/generated';
+import { CreateShotDto, EditShotDto, ReadBeanDto, ReadGrinderDto, ReadMachineDto, ReadShotDto } from '@/api/generated';
 import { shotsApi } from '../../api/shots';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FilterModal, { FilterOptions } from '@/components/filterModal';
@@ -66,12 +66,22 @@ const ShotListItem = ({ shot, onToggleStar, onViewDetails, onUseAsReference, onE
           </Text>
         </View>
 
-        <View style={styles.detail}>
-          <Text style={styles.label}>{shot.customFields? `${shot.customFields[0].key}` : ""}</Text>
-          <Text style={styles.value}>
-            {shot.customFields ? `${shot.customFields[0].value}` : 'N/A'}
-          </Text>
-        </View>
+        {shot.customFields && Array.isArray(shot.customFields) && shot.customFields.length > 0 ? (
+  <View style={styles.customFieldsContainer}>
+    <Text style={styles.customFieldsHeader}>Custom Fields:</Text>
+    {shot.customFields.map((field, index) => (
+      <View key={`custom-field-${index}`} style={styles.customFieldItem}>
+        <Text style={styles.label}>
+          {field && typeof field === 'object' && 'key' in field ? field.key : `Field ${index + 1}`}
+        </Text>
+        <Text style={styles.value}>
+          {field && typeof field === 'object' && 'value' in field ? field.value : 'N/A'}
+        </Text>
+      </View>
+    ))}
+  </View>
+) : null}
+
 
         <View style={styles.statsContainer}>
           <View style={styles.stat}>
@@ -462,7 +472,7 @@ export default function ShotListScreen() {
       {isAuthenticated ? (
         <FlatList
           data={getFilteredShots()}
-          keyExtractor={(item) => `shot-${item.id}`}
+          keyExtractor={(item) => `shot-${item.id}-${Math.random()}`}
           renderItem={({ item }) => (
             <ShotListItem 
               shot={item} 
@@ -671,4 +681,23 @@ const styles = StyleSheet.create({
   emptyButton: {
     marginTop: 20,
   },
+  customFieldsContainer: {
+    marginTop: 8,
+    marginBottom: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 8,
+  },
+  customFieldsHeader: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 4,
+  },
+  customFieldItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  
 });
