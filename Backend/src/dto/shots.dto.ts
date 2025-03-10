@@ -187,31 +187,28 @@ export class ReadShotDto {
   })
   beans: ReadBeanDto;
 
-  @IsObject()
+  @IsOptional()
+  @IsArray()
   @ApiProperty({
     description: 'The shot graph data',
-    type: 'object',
-    properties: {
-      pressure: {
-        type: 'array',
-        items: { type: 'number' },
-        example: [9.0, 9.1, 9.0, 8.9],
-      },
-      flow: {
-        type: 'array',
-        items: { type: 'number' },
-        example: [2.0, 2.1, 2.0, 1.9],
-      },
-      temperature: {
-        type: 'array',
-        items: { type: 'number' },
-        example: [93.5, 93.4, 93.3, 93.2],
-      },
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        pressure: { type: 'number', example: 9.0 },
+        flow: { type: 'number', example: 2.0 },
+        temperature: { type: 'number', example: 93.5 }
+      }
     },
-    additionalProperties: false,
+    example: [
+      { pressure: 9.0, flow: 2.0, temperature: 93.5 },
+      { pressure: 9.1, flow: 2.1, temperature: 93.4 },
+      { pressure: 9.0, flow: 2.0, temperature: 93.3 },
+      { pressure: 8.9, flow: 1.9, temperature: 93.2 }
+    ],
     nullable: true,
   })
-  graphData: any;
+  graphData?: any
 
   @IsString()
   @ApiProperty({
@@ -312,63 +309,65 @@ export class CreateShotDto {
   })
   dose: number;
 
+  @IsOptional()
   @IsUUID()
-  @IsNotEmpty()
   @ApiProperty({
     description: 'The identifier of the machine used',
     example: '123e4567-e89b-12d3-a456-426614174002',
     format: 'uuid',
+    nullable: true
   })
-  machineId: string;
+  machineId: string | null;
 
+  @IsOptional()
   @IsUUID()
-  @IsNotEmpty()
   @ApiProperty({
     description: 'The identifier of the grinder used',
     example: '123e4567-e89b-12d3-a456-426614174003',
     format: 'uuid',
+    nullable: true
   })
-  grinderId: string;
+  grinderId: string | null;
 
+  @IsOptional()
   @IsUUID()
-  @IsNotEmpty()
   @ApiProperty({
     description: 'The identifier of the beans used',
     example: '123e4567-e89b-12d3-a456-426614174004',
     format: 'uuid',
+    nullable: true
   })
-  beansId: string;
+  beansId: string | null;
 
-  @IsObject()
+  @IsOptional()
+  @IsArray()
   @ApiProperty({
     description: 'The shot graph data',
-    type: 'object',
-    properties: {
-      pressure: {
-        type: 'array',
-        items: { type: 'number' },
-        example: [9.0, 9.1, 9.0, 8.9],
-      },
-      flow: {
-        type: 'array',
-        items: { type: 'number' },
-        example: [2.0, 2.1, 2.0, 1.9],
-      },
-      temperature: {
-        type: 'array',
-        items: { type: 'number' },
-        example: [93.5, 93.4, 93.3, 93.2],
-      },
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        pressure: { type: 'number', example: 9.0 },
+        flow: { type: 'number', example: 2.0 },
+        temperature: { type: 'number', example: 93.5 }
+      }
     },
-    additionalProperties: false,
+    example: [
+      { pressure: 9.0, flow: 2.0, temperature: 93.5 },
+      { pressure: 9.1, flow: 2.1, temperature: 93.4 },
+      { pressure: 9.0, flow: 2.0, temperature: 93.3 },
+      { pressure: 8.9, flow: 1.9, temperature: 93.2 }
+    ],
+    nullable: true,
   })
-  graphData: any;
+  graphData?: any
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @ApiProperty({
     description: 'The group identifier',
     example: 'Fruity',
+    nullable: true
   })
   group: string;
 
@@ -447,64 +446,65 @@ export class EditShotDto {
   })
   dose?: number;
 
-  @IsUUID()
   @IsOptional()
+  @IsUUID()
   @ApiProperty({
     description: 'The identifier of the machine used',
     example: '123e4567-e89b-12d3-a456-426614174002',
     format: 'uuid',
+    nullable: true
   })
   machineId?: string;
 
-  @IsUUID()
   @IsOptional()
+  @IsUUID()
   @ApiProperty({
     description: 'The identifier of the grinder used',
     example: '123e4567-e89b-12d3-a456-426614174003',
     format: 'uuid',
+    nullable: true
   })
   grinderId?: string;
 
-  @IsUUID()
   @IsOptional()
+  @IsUUID()
   @ApiProperty({
     description: 'The identifier of the beans used',
     example: '123e4567-e89b-12d3-a456-426614174004',
     format: 'uuid',
+    nullable: true
   })
   beansId?: string;
 
-  @IsObject()
   @IsOptional()
+  @IsArray()
   @ApiProperty({
     description: 'The shot graph data',
-    type: 'object',
-    properties: {
-      pressure: {
-        type: 'array',
-        items: { type: 'number' },
-        example: [9.0, 9.1, 9.0, 8.9],
-      },
-      flow: {
-        type: 'array',
-        items: { type: 'number' },
-        example: [2.0, 2.1, 2.0, 1.9],
-      },
-      temperature: {
-        type: 'array',
-        items: { type: 'number' },
-        example: [93.5, 93.4, 93.3, 93.2],
-      },
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        pressure: { type: 'number', example: 9.0 },
+        flow: { type: 'number', example: 2.0 },
+        temperature: { type: 'number', example: 93.5 }
+      }
     },
-    additionalProperties: false,
+    example: [
+      { pressure: 9.0, flow: 2.0, temperature: 93.5 },
+      { pressure: 9.1, flow: 2.1, temperature: 93.4 },
+      { pressure: 9.0, flow: 2.0, temperature: 93.3 },
+      { pressure: 8.9, flow: 1.9, temperature: 93.2 }
+    ],
+    nullable: true,
   })
-  graphData?: any;
+  graphData?: any
 
   @IsString()
   @IsOptional()
   @ApiProperty({
     description: 'The group identifier',
     example: 'Fruity',
+    nullable:true
   })
   group?: string;
 
@@ -517,6 +517,7 @@ export class EditShotDto {
   })
   starred?: boolean;
 
+  @IsOptional()
   @IsArray()
   @ApiProperty({
     description: 'Custom Fields for other infos for the user',
