@@ -15,12 +15,15 @@ export const shotsApi = {
   },
 
   create: async (shot: CreateShotDto) => {
+    console.log("CREATE SHOT: ", shot)
     const response = await axios.post<ReadShotDto>('/shots/one', shot);
     return response.data;
   },
 
   edit: async (id: string, shot: EditShotDto) => {
+    console.log("SHOT: ", shot, id)
     const response = await axios.patch<ReadShotDto>(`/shots/one/${id}`, shot);
+    console.log(response)
     return response.data;
   },
 

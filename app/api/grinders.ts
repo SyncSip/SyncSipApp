@@ -14,8 +14,8 @@ export const grindersApi = {
     return response.data;
   },
 
-  create: async (shot: CreateGrinderDto) => {
-    const response = await axios.post<ReadGrinderDto>('/grinders/one', shot);
+  create: async (grinder: CreateGrinderDto) => {
+    const response = await axios.post<ReadGrinderDto>('/grinders', grinder);
     return response.data;
   },
 

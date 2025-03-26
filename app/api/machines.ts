@@ -15,7 +15,8 @@ export const machinesApi = {
   },
 
   create: async (shot: CreateMachineDto) => {
-    const response = await axios.post<ReadMachineDto>('/machines/one', shot);
+    console.log("CREATE: ", shot)
+    const response = await axios.post<ReadMachineDto>('/machines', shot);
     return response.data;
   },
 
