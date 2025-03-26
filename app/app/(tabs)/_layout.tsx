@@ -64,6 +64,17 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="equipment"
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <View style={styles.tabContainer}>
+              <IconSymbol size={28} name="wrench.and.screwdriver" color={color} />
+              <Text style={[styles.label, { color }]}></Text>
+            </View>
+          ),
+        }}
+      />
     </Tabs>
   );
 }
