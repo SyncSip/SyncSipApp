@@ -4,8 +4,8 @@ import { BleManager, Device, Characteristic } from 'react-native-ble-plx'
 import * as ExpoDevice from 'expo-device'
 import { Buffer } from 'buffer'
 
-const PRESSURE_SERVICE_UUID = "181A"
-const PRESSURE_CHARACTERISTIC_UUID = "2A6D"
+const PRESSURE_SERVICE_UUID = "0000181A-0000-1000-8000-00805F9B34FB"
+const PRESSURE_CHARACTERISTIC_UUID = "00002A6D-0000-1000-8000-00805F9B34FB"
 
 interface bleAPI {
     requestPermissions(): Promise<boolean>
