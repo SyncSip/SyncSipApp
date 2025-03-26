@@ -169,15 +169,13 @@ const styles = StyleSheet.create({
     flex: 2,
   },
   closeButton: {
-    backgroundColor: '#007AFF',
     padding: 15,
-    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 20,
   },
   closeButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#007AFF',
+    fontSize: 17,
+    fontWeight: '400',
   },
 });

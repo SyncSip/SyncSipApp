@@ -369,23 +369,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff'
   },
   saveButton: {
-    backgroundColor: '#007AFF',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 15,
   },
   cancelButton: {
-    backgroundColor: 'grey',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
   },
   saveButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#007AFF',
+    fontSize: 17,
+    fontWeight: '400',
   },
   keyValueList: {
     marginTop: 10,

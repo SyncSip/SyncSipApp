@@ -104,10 +104,10 @@ const ShotListItem = ({ shot, onToggleStar, onViewDetails, onUseAsReference, onE
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
-            style={[styles.button, styles.editButton]}
+            style={[styles.button]}
             onPress={() => onEdit(shot)}
           >
-            <Text style={[styles.buttonText, styles.referenceButtonText]}>Edit</Text>
+            <Text style={[styles.buttonText]}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.button}
@@ -117,10 +117,10 @@ const ShotListItem = ({ shot, onToggleStar, onViewDetails, onUseAsReference, onE
           </TouchableOpacity>
         </View>
           <TouchableOpacity 
-            style={[styles.button, styles.referenceButton]}
+            style={[styles.button]}
             onPress={() => onUseAsReference(shot)}
           >
-            <Text style={[styles.buttonText, styles.referenceButtonText]}>Use as Reference</Text>
+            <Text style={[styles.buttonText]}>Use as Reference</Text>
           </TouchableOpacity>
       </View>
     </View>
@@ -619,16 +619,13 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    backgroundColor: '#acdae6',
-    padding: 10,
-    borderRadius: 8,
+    padding: 5,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   buttonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#007AFF',
+    fontSize: 17,
+    fontWeight: '400',
   },
   referenceButton: {
     backgroundColor: '#6F4E37',
