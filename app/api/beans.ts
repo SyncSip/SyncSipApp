@@ -15,7 +15,7 @@ export const beansApi = {
   },
 
   create: async (shot: CreateBeanDto) => {
-    const response = await axios.post<ReadBeanDto>('/beans/one', shot);
+    const response = await axios.post<ReadBeanDto>('/beans', shot);
     return response.data;
   },
 
