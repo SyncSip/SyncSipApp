@@ -11,45 +11,6 @@ interface DataPoint {
   flowRate: number;
 }
 
-const getNextValues = (currentPressure: number, currentWeight: number, elapsedTime: number): { pressure: number, weight: number } => {
-  const PREINFUSION_TIME = 10;
-  const RAMPUP_TIME = 3;
-  const EXTRACTION_TIME = 27;
-  const DECLINE_TIME = 10;
-  const TOTAL_TIME = PREINFUSION_TIME + RAMPUP_TIME + EXTRACTION_TIME + DECLINE_TIME;
-
-  const PREINFUSION_PRESSURE = 2;
-  const EXTRACTION_PRESSURE = 9;
-  const TARGET_WEIGHT = 40;
-
-  if (elapsedTime <= PREINFUSION_TIME) {
-    const progress = elapsedTime / PREINFUSION_TIME;
-    const pressure = PREINFUSION_PRESSURE * progress;
-    const weight = (TARGET_WEIGHT * 0.05) * progress;
-    return { pressure, weight };
-  } 
-  else if (elapsedTime <= PREINFUSION_TIME + RAMPUP_TIME) {
-    const progress = (elapsedTime - PREINFUSION_TIME) / RAMPUP_TIME;
-    const pressure = PREINFUSION_PRESSURE + (EXTRACTION_PRESSURE - PREINFUSION_PRESSURE) * progress;
-    const weight = TARGET_WEIGHT * 0.1;
-    return { pressure, weight };
-  } 
-  else if (elapsedTime <= PREINFUSION_TIME + RAMPUP_TIME + EXTRACTION_TIME) {
-    const progress = (elapsedTime - (PREINFUSION_TIME + RAMPUP_TIME)) / EXTRACTION_TIME;
-    const pressure = EXTRACTION_PRESSURE;
-    const weight = TARGET_WEIGHT * (0.1 + 0.8 * progress); 
-    return { pressure, weight };
-  } 
-  else if (elapsedTime <= TOTAL_TIME) {
-    const progress = (elapsedTime - (PREINFUSION_TIME + RAMPUP_TIME + EXTRACTION_TIME)) / DECLINE_TIME;
-    const pressure = EXTRACTION_PRESSURE * (1 - progress);
-    const weight = TARGET_WEIGHT * (0.9 + 0.1 * progress);
-    return { pressure, weight };
-  } 
-  else {
-    return { pressure: 0, weight: TARGET_WEIGHT };
-  }
-};
 const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
   const [data, setData] = useState<DataPoint[]>([]);
   const animationFrameId = useRef<number>();
@@ -115,19 +76,19 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
   }, [isStarted]);
 
   const updateGraph = () => {
-    const currentTime = (Date.now() - startTime.current) / 1000;
-    const { pressure, weight } = getNextValues(0, 0, currentTime);
+    // const currentTime = (Date.now() - startTime.current) / 1000;
+    // const { pressure, weight } = getNextValues(0, 0, currentTime);
     
-    const flowRate = data.length > 1 
-      ? (weight - data[data.length - 1].weight) / 
-        (currentTime - data[data.length - 1].time)
-      : 0;
+    // const flowRate = data.length > 1 
+      // ? (weight - data[data.length - 1].weight) / 
+        // (currentTime - data[data.length - 1].time)
+      // : 0;
 
     const newDataPoint = {
-      time: currentTime,
+      time: 0,
       pressure: pressureValue || 0,
-      weight,
-      flowRate: Math.max(0, flowRate)
+      weight: 0,
+      flowRate: 0
     };
 
     setData(prevData => {
