@@ -165,7 +165,6 @@ export default function EquipmentScreen() {
     try {
       await machinesApi.delete(id);
       setMachines(machines.filter(machine => machine.id !== id));
-      Alert.alert('Success', 'Machine deleted successfully!');
     } catch (error) {
       console.error('Error deleting machine:', error);
       Alert.alert('Error', 'Failed to delete machine. Please try again.');
@@ -176,7 +175,6 @@ export default function EquipmentScreen() {
     try {
       await grindersApi.delete(id);
       setGrinders(grinders.filter(grinder => grinder.id !== id));
-      Alert.alert('Success', 'Grinder deleted successfully!');
     } catch (error) {
       console.error('Error deleting grinder:', error);
       Alert.alert('Error', 'Failed to delete grinder. Please try again.');
@@ -187,7 +185,6 @@ export default function EquipmentScreen() {
     try {
       await beansApi.delete(id);
       setBeans(beans.filter(bean => bean.id !== id));
-      Alert.alert('Success', 'Beans deleted successfully!');
     } catch (error) {
       console.error('Error deleting beans:', error);
       Alert.alert('Error', 'Failed to delete beans. Please try again.');
