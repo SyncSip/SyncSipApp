@@ -18,7 +18,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-if(configService.get("NODE_ENV") === "development"){
 
   const config = new DocumentBuilder()
   .setTitle('SyncSipApi')
@@ -29,10 +28,10 @@ if(configService.get("NODE_ENV") === "development"){
   const document = SwaggerModule.createDocument(app, config);
   
   const yamlString = YAML.stringify(document);
-  fs.writeFileSync('../OpenApiConfig/openapi-spec.yaml', yamlString);
+  fs.writeFileSync('./openapi/openapi-spec.yaml', yamlString);
   
   SwaggerModule.setup('docs', app, document);
-}
+  
   await app.listen(port);
 }
 bootstrap();
