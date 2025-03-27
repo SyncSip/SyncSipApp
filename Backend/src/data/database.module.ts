@@ -21,7 +21,6 @@ import { DatabaseService } from './database.service';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         entities: [User, Shot, Machine, Grinder, Bean],
-        synchronize: configService.get('NODE_ENV') === 'development'
       }),
       inject: [ConfigService],
     }),
