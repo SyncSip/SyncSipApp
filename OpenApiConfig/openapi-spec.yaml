@@ -9,6 +9,43 @@ paths:
           description: ""
       tags:
         - App
+  /auth/login:
+    post:
+      operationId: AuthController_login
+      parameters: []
+      responses:
+        "201":
+          description: ""
+      tags: &a1
+        - Auth
+  /auth/refresh:
+    post:
+      operationId: AuthController_refreshTokens
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshDto"
+      responses:
+        "201":
+          description: ""
+      tags: *a1
+  /auth/logout:
+    post:
+      operationId: AuthController_logout
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshDto"
+      responses:
+        "201":
+          description: ""
+      tags: *a1
   /auth/register:
     post:
       operationId: AuthController_register
@@ -21,7 +58,21 @@ paths:
               $ref: "#/components/schemas/CreateUserDto"
       responses:
         "201":
-          description: User successfully registered
+          description: ""
+      tags: *a1
+  /user:
+    post:
+      operationId: UsersController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserDto"
+      responses:
+        "201":
+          description: User successfully created
           content:
             application/json:
               schema:
@@ -30,22 +81,44 @@ paths:
           description: Bad request
         "500":
           description: Internal Server Error
-      summary: Register a new user
-      tags: &a1
-        - Auth
-  /auth/login:
-    post:
-      operationId: AuthController_login
+      summary: create a user
+      tags: &a2
+        - user
+  /user/user:
+    patch:
+      operationId: UsersController_register
       parameters: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LoginDto"
+              $ref: "#/components/schemas/EditUserDto"
+      responses:
+        "201":
+          description: User successfully edited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponseDto"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal Server Error
+      summary: edit a user
+      tags: *a2
+    delete:
+      operationId: UsersController_login
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteUserDto"
       responses:
         "200":
-          description: User successfully logged in
+          description: Delete User
           content:
             application/json:
               schema:
@@ -54,8 +127,8 @@ paths:
           description: Unauthorized
         "500":
           description: Internal Server Error
-      summary: Login user
-      tags: *a1
+      summary: Delete a user
+      tags: *a2
   /shots/{id}:
     get:
       operationId: ShotsController_get
@@ -77,7 +150,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Get a Shot
-      tags: &a2
+      tags: &a3
         - shots
     delete:
       operationId: ShotsController_delete
@@ -99,7 +172,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Delete One Shot
-      tags: *a2
+      tags: *a3
   /shots/many/{userId}:
     get:
       operationId: ShotsController_getAll
@@ -123,7 +196,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Get all Shots
-      tags: *a2
+      tags: *a3
   /shots/one:
     post:
       operationId: ShotsController_create
@@ -146,7 +219,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: create one Shot
-      tags: *a2
+      tags: *a3
   /shots/one/{id}:
     patch:
       operationId: ShotsController_edit
@@ -174,7 +247,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Edit one shot
-      tags: *a2
+      tags: *a3
   /machines/{id}:
     get:
       operationId: MachinesController_get
@@ -196,7 +269,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Get a Machine
-      tags: &a3
+      tags: &a4
         - Machines
     delete:
       operationId: MachinesController_delete
@@ -218,7 +291,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Delete One Machine
-      tags: *a3
+      tags: *a4
     patch:
       operationId: MachinesController_edit
       parameters:
@@ -245,7 +318,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Edit One Machine
-      tags: *a3
+      tags: *a4
   /machines/many/{id}:
     get:
       operationId: MachinesController_getAll
@@ -269,7 +342,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Get many Machines
-      tags: *a3
+      tags: *a4
   /machines:
     post:
       operationId: MachinesController_create
@@ -294,7 +367,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Create One Machine
-      tags: *a3
+      tags: *a4
   /grinders/{id}:
     get:
       operationId: GrindersController_get
@@ -316,7 +389,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Get a Grinder
-      tags: &a4
+      tags: &a5
         - Grinders
     delete:
       operationId: GrindersController_delete
@@ -338,7 +411,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Delete One Grinder
-      tags: *a4
+      tags: *a5
     patch:
       operationId: GrindersController_edit
       parameters:
@@ -365,7 +438,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Edit One Grinder
-      tags: *a4
+      tags: *a5
   /grinders/many/{id}:
     get:
       operationId: GrindersController_getAll
@@ -389,7 +462,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Get many Grinders
-      tags: *a4
+      tags: *a5
   /grinders:
     post:
       operationId: GrindersController_create
@@ -414,7 +487,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Create One Grinder
-      tags: *a4
+      tags: *a5
   /beans/{id}:
     get:
       operationId: BeansController_get
@@ -436,7 +509,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Get a bean
-      tags: &a5
+      tags: &a6
         - Beans
     delete:
       operationId: BeansController_delete
@@ -458,7 +531,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Delete One bean
-      tags: *a5
+      tags: *a6
     patch:
       operationId: BeansController_edit
       parameters:
@@ -485,7 +558,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Edit One Bean
-      tags: *a5
+      tags: *a6
   /beans/many/{id}:
     get:
       operationId: BeansController_getAll
@@ -509,7 +582,7 @@ paths:
         "500":
           description: Internal Server Error
       summary: Get many Beans
-      tags: *a5
+      tags: *a6
   /beans:
     post:
       operationId: BeansController_create
@@ -534,52 +607,6 @@ paths:
         "500":
           description: Internal Server Error
       summary: Create One Bean
-      tags: *a5
-  /user/user:
-    patch:
-      operationId: UsersController_register
-      parameters: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/EditUserDto"
-      responses:
-        "201":
-          description: User successfully edited
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserResponseDto"
-        "400":
-          description: Bad request
-        "500":
-          description: Internal Server Error
-      summary: edit a user
-      tags: &a6
-        - user
-    delete:
-      operationId: UsersController_login
-      parameters: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DeleteUserDto"
-      responses:
-        "200":
-          description: Delete User
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserResponseDto"
-        "401":
-          description: Unauthorized
-        "500":
-          description: Internal Server Error
-      summary: Delete a user
       tags: *a6
 info:
   title: SyncSipApi
@@ -590,6 +617,20 @@ tags: []
 servers: []
 components:
   schemas:
+    RefreshDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The user's id
+          example: "234957689234"
+        refreshToken:
+          type: string
+          description: The user's refresh token
+          example: "234957689234"
+      required:
+        - id
+        - refreshToken
     CreateUserDto:
       type: object
       properties:
@@ -624,21 +665,100 @@ components:
       required:
         - id
         - name
-    LoginDto:
+    EditUserDto:
       type: object
       properties:
-        email:
+        name:
           type: string
-          description: The user's email address
-          example: user@example.com
-        password:
-          type: string
-          description: The user's password
-          minimum: 8
-          example: password123
+          description: The user's name
+          example: John Doe
       required:
-        - email
-        - password
+        - name
+    DeleteUserDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The users id
+          example: "76342976324893"
+      required:
+        - id
+    ReadMachineDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The Machines id
+          example: "234957689234"
+        brandName:
+          type: string
+          description: The machines Brand Name
+          example: La Marzocco
+        model:
+          type: string
+          description: The Machine Model
+          example: Linea Micra
+        userId:
+          type: string
+          description: The users id the machine belongs to
+          example: 7963432324987hr
+      required:
+        - id
+        - brandName
+        - model
+        - userId
+    ReadGrinderDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The grinder's id
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+        brandName:
+          type: string
+          description: The grinder's brand name
+          example: Niche
+        model:
+          type: string
+          description: The grinder's model
+          example: Zero
+        userId:
+          type: string
+          description: The user's id the grinder belongs to
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+      required:
+        - id
+        - brandName
+        - model
+        - userId
+    ReadBeanDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The bean's id
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+        roastery:
+          type: string
+          description: The name of the roastery
+          example: Square Mile
+        bean:
+          type: string
+          description: The name of the bean/blend
+          example: Red Brick
+        userId:
+          type: string
+          description: The user's id the beans belong to
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+      required:
+        - id
+        - roastery
+        - bean
+        - userId
     ReadShotDto:
       type: object
       properties:
@@ -669,52 +789,68 @@ components:
           description: The identifier of the machine used
           example: 123e4567-e89b-12d3-a456-426614174002
           format: uuid
+          nullable: true
         grinderId:
           type: string
           description: The identifier of the grinder used
           example: 123e4567-e89b-12d3-a456-426614174003
           format: uuid
+          nullable: true
         beansId:
           type: string
           description: The identifier of the beans used
           example: 123e4567-e89b-12d3-a456-426614174004
           format: uuid
+          nullable: true
+        machine:
+          description: The machine used for the shot
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/ReadMachineDto"
+        grinder:
+          description: The grinder used for the shot
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/ReadGrinderDto"
+        beans:
+          description: The beans used for the shot
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/ReadBeanDto"
         graphData:
-          type: object
+          type: array
           description: The shot graph data
-          properties:
-            pressure:
-              type: array
-              items:
+          items:
+            type: object
+            properties:
+              pressure:
                 type: number
-              example:
-                - 9
-                - 9.1
-                - 9
-                - 8.9
-            flow:
-              type: array
-              items:
+                example: 9
+              flow:
                 type: number
-              example:
-                - 2
-                - 2.1
-                - 2
-                - 1.9
-            temperature:
-              type: array
-              items:
+                example: 2
+              temperature:
                 type: number
-              example:
-                - 93.5
-                - 93.4
-                - 93.3
-                - 93.2
-          additionalProperties: false
+                example: 93.5
+          example:
+            - pressure: 9
+              flow: 2
+              temperature: 93.5
+            - pressure: 9.1
+              flow: 2.1
+              temperature: 93.4
+            - pressure: 9
+              flow: 2
+              temperature: 93.3
+            - pressure: 8.9
+              flow: 1.9
+              temperature: 93.2
+          nullable: true
         group:
           type: string
           description: The group identifier
           example: Fruity
+          nullable: true
         starred:
           type: boolean
           description: Whether the shot is starred/favorited
@@ -722,13 +858,33 @@ components:
         createdAt:
           format: date-time
           type: string
-          description: Timestamp of the time when the shot was created
-          example: 2025-01-09T20:14:33.713Z
+          description: Timestamp of when the shot was created
+          example: 2025-03-27T14:36:56.639Z
         updatedAt:
           format: date-time
           type: string
-          description: Timestamp of the time when the shot was created
-          example: 2025-01-09T20:14:33.713Z
+          description: Timestamp of when the shot was last updated
+          example: 2025-03-27T14:36:56.639Z
+        customFields:
+          type: array
+          description: Custom Fields for other infos for the user
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+                example: Top-Note
+              value:
+                type: string
+                example: floral
+          example:
+            - key: Top-Note
+              value: floral
+            - key: Heart-Note
+              value: fruity
+            - key: Bottom-Note
+              value: tangy
+          nullable: true
       required:
         - id
         - userId
@@ -738,11 +894,15 @@ components:
         - machineId
         - grinderId
         - beansId
+        - machine
+        - grinder
+        - beans
         - graphData
         - group
         - starred
         - createdAt
         - updatedAt
+        - customFields
     CreateShotDto:
       type: object
       properties:
@@ -768,56 +928,77 @@ components:
           description: The identifier of the machine used
           example: 123e4567-e89b-12d3-a456-426614174002
           format: uuid
+          nullable: true
         grinderId:
           type: string
           description: The identifier of the grinder used
           example: 123e4567-e89b-12d3-a456-426614174003
           format: uuid
+          nullable: true
         beansId:
           type: string
           description: The identifier of the beans used
           example: 123e4567-e89b-12d3-a456-426614174004
           format: uuid
+          nullable: true
         graphData:
-          type: object
+          type: array
           description: The shot graph data
-          properties:
-            pressure:
-              type: array
-              items:
+          items:
+            type: object
+            properties:
+              pressure:
                 type: number
-              example:
-                - 9
-                - 9.1
-                - 9
-                - 8.9
-            flow:
-              type: array
-              items:
+                example: 9
+              flow:
                 type: number
-              example:
-                - 2
-                - 2.1
-                - 2
-                - 1.9
-            temperature:
-              type: array
-              items:
+                example: 2
+              temperature:
                 type: number
-              example:
-                - 93.5
-                - 93.4
-                - 93.3
-                - 93.2
-          additionalProperties: false
+                example: 93.5
+          example:
+            - pressure: 9
+              flow: 2
+              temperature: 93.5
+            - pressure: 9.1
+              flow: 2.1
+              temperature: 93.4
+            - pressure: 9
+              flow: 2
+              temperature: 93.3
+            - pressure: 8.9
+              flow: 1.9
+              temperature: 93.2
+          nullable: true
         group:
           type: string
           description: The group identifier
           example: Fruity
+          nullable: true
         starred:
           type: boolean
           description: Whether the shot is starred/favorited
           example: true
+        customFields:
+          type: array
+          description: Custom Fields for other infos for the user
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+                example: Top-Note
+              value:
+                type: string
+                example: floral
+          example:
+            - key: Top-Note
+              value: floral
+            - key: Heart-Note
+              value: fruity
+            - key: Bottom-Note
+              value: tangy
+          nullable: true
       required:
         - userId
         - time
@@ -829,6 +1010,7 @@ components:
         - graphData
         - group
         - starred
+        - customFields
     EditShotDto:
       type: object
       properties:
@@ -854,56 +1036,77 @@ components:
           description: The identifier of the machine used
           example: 123e4567-e89b-12d3-a456-426614174002
           format: uuid
+          nullable: true
         grinderId:
           type: string
           description: The identifier of the grinder used
           example: 123e4567-e89b-12d3-a456-426614174003
           format: uuid
+          nullable: true
         beansId:
           type: string
           description: The identifier of the beans used
           example: 123e4567-e89b-12d3-a456-426614174004
           format: uuid
+          nullable: true
         graphData:
-          type: object
+          type: array
           description: The shot graph data
-          properties:
-            pressure:
-              type: array
-              items:
+          items:
+            type: object
+            properties:
+              pressure:
                 type: number
-              example:
-                - 9
-                - 9.1
-                - 9
-                - 8.9
-            flow:
-              type: array
-              items:
+                example: 9
+              flow:
                 type: number
-              example:
-                - 2
-                - 2.1
-                - 2
-                - 1.9
-            temperature:
-              type: array
-              items:
+                example: 2
+              temperature:
                 type: number
-              example:
-                - 93.5
-                - 93.4
-                - 93.3
-                - 93.2
-          additionalProperties: false
+                example: 93.5
+          example:
+            - pressure: 9
+              flow: 2
+              temperature: 93.5
+            - pressure: 9.1
+              flow: 2.1
+              temperature: 93.4
+            - pressure: 9
+              flow: 2
+              temperature: 93.3
+            - pressure: 8.9
+              flow: 1.9
+              temperature: 93.2
+          nullable: true
         group:
           type: string
           description: The group identifier
           example: Fruity
+          nullable: true
         starred:
           type: boolean
           description: Whether the shot is starred/favorited
           example: true
+        customFields:
+          type: array
+          description: Custom Fields for other infos for the user
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+                example: Top-Note
+              value:
+                type: string
+                example: floral
+          example:
+            - key: Top-Note
+              value: floral
+            - key: Heart-Note
+              value: fruity
+            - key: Bottom-Note
+              value: tangy
+          nullable: true
       required:
         - userId
         - time
@@ -915,30 +1118,7 @@ components:
         - graphData
         - group
         - starred
-    ReadMachineDto:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The Machines id
-          example: "234957689234"
-        brandName:
-          type: string
-          description: The machines Brand Name
-          example: La Marzocco
-        model:
-          type: string
-          description: The Machine Model
-          example: Linea Micra
-        userId:
-          type: string
-          description: The users id the machine belongs to
-          example: 7963432324987hr
-      required:
-        - id
-        - brandName
-        - model
-        - userId
+        - customFields
     CreateMachineDto:
       type: object
       properties:
@@ -969,32 +1149,6 @@ components:
           type: string
           description: The Machine Model
           example: Linea Micra
-    ReadGrinderDto:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The grinder's id
-          example: 123e4567-e89b-12d3-a456-426614174000
-          format: uuid
-        brandName:
-          type: string
-          description: The grinder's brand name
-          example: Niche
-        model:
-          type: string
-          description: The grinder's model
-          example: Zero
-        userId:
-          type: string
-          description: The user's id the grinder belongs to
-          example: 123e4567-e89b-12d3-a456-426614174000
-          format: uuid
-      required:
-        - id
-        - brandName
-        - model
-        - userId
     CreateGrinderDto:
       type: object
       properties:
@@ -1026,32 +1180,6 @@ components:
           type: string
           description: The grinder's model
           example: Zero
-    ReadBeanDto:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The bean's id
-          example: 123e4567-e89b-12d3-a456-426614174000
-          format: uuid
-        roastery:
-          type: string
-          description: The name of the roastery
-          example: Square Mile
-        bean:
-          type: string
-          description: The name of the bean/blend
-          example: Red Brick
-        userId:
-          type: string
-          description: The user's id the beans belong to
-          example: 123e4567-e89b-12d3-a456-426614174000
-          format: uuid
-      required:
-        - id
-        - roastery
-        - bean
-        - userId
     CreateBeanDto:
       type: object
       properties:
@@ -1083,21 +1211,3 @@ components:
           type: string
           description: The name of the bean/blend
           example: Red Brick
-    EditUserDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: The user's name
-          example: John Doe
-      required:
-        - name
-    DeleteUserDto:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The users id
-          example: "76342976324893"
-      required:
-        - id
