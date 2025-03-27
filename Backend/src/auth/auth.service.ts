@@ -1,7 +1,6 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from 'src/dto/create-user.dto';
-import { LoginDto } from 'src/dto/login.dto';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt'
 
@@ -105,6 +104,18 @@ export class AuthService {
   }
 
   async logout(userId: string) {
-    return this.usersService.updateRefreshToken({id: userId, refreshToken: null});
+    return await this.usersService.updateRefreshToken({id: userId, refreshToken: null});
+  }
+
+  async register(createUserDto: CreateUserDto){
+    const user = await this.usersService.findByMail(createUserDto.email)
+    if(user){
+      console.log(user)
+      throw new BadRequestException("This email is already registered")
+    }
+    const newUser = await this.usersService.create(createUserDto)
+    if(newUser){
+      return 200
+    }
   }
 }

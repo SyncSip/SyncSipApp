@@ -30,4 +30,10 @@ export class AuthController {
     await this.authService.logout(body.id);
     return { message: 'Logged out successfully' };
   }
+
+  @Post('/register')
+  async register(@Body() body: CreateUserDto){
+    console.log(body)
+    return await this.authService.register(body)
+  }
 }
