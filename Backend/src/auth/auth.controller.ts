@@ -13,7 +13,8 @@ export class AuthController {
 
   @UseGuards(LocalStrategy)
   @Post('/login')
-  async login(@Body() body: {username: string, password: string}) {
+  async login(@Body() body: {username: string, password: string}, @Req() req) {
+    console.log(req)
     const login = await this.authService.login(body.username, body.password);
     console.log(login)
     return login
