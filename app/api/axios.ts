@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: "https://api.grinduino.com",
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ axiosInstance.interceptors.response.use(
         const refreshToken = await SecureStore.getItemAsync('refreshToken');
 
         if (refreshToken) {
-          const response = await axios.post('http://localhost:3000/auth/refresh', {
+          const response = await axios.post('https://api.grinduino.com/auth/refresh', {
             refreshToken,
           });
 
