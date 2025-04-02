@@ -120,7 +120,7 @@ export default function AddShotModal({
         beansId: shotData.beansId || null,
         graphData: Array.isArray(shotData.graphData) ? shotData.graphData : [],
         group: shotData.group || null,
-        starred: false,
+        starred: shotData.starred,
         customFields: indieFields
       };
   
