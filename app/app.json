@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lnart.app",
+      "bundleIdentifier": "com.lnart.syncsip",
       "appleTeamId": "7GUBP9M2G8"
     },
     "android": {
