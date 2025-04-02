@@ -7,8 +7,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  View,
 } from "react-native";
 import { Device } from "react-native-ble-plx";
+
+type SensorType = 'pressure' | 'scale';
 
 type DeviceModalListItemProps = {
   item: ListRenderItemInfo<Device>;
@@ -21,6 +24,7 @@ type DeviceModalProps = {
   visible: boolean;
   connectToPeripheral: (device: Device) => void;
   closeModal: () => void;
+  sensorType: SensorType;
 };
 
 const DeviceModalListItem: FC<DeviceModalListItemProps> = (props) => {
@@ -35,17 +39,18 @@ const DeviceModalListItem: FC<DeviceModalListItemProps> = (props) => {
   return (
     <TouchableOpacity
       onPress={connectAndCloseModal}
-      style={modalStyle.ctaButton}
+      style={modalStyle.deviceItem}
     >
-      <Text style={modalStyle.ctaButtonText}>
-        {`${item.item.name || 'Unknown'} (${item.item.id})`}
+      <Text style={modalStyle.deviceName}>
+        {item.item.name || 'Unknown Device'}
       </Text>
+      <Text style={modalStyle.deviceId}>{item.item.id}</Text>
     </TouchableOpacity>
   );
 };
 
 const DeviceModal: FC<DeviceModalProps> = (props) => {
-  const { devices, visible, connectToPeripheral, closeModal } = props;
+  const { devices, visible, connectToPeripheral, closeModal, sensorType } = props;
 
   const renderDeviceModalListItem = useCallback(
     (item: ListRenderItemInfo<Device>) => {
@@ -62,66 +67,110 @@ const DeviceModal: FC<DeviceModalProps> = (props) => {
 
   return (
     <Modal
-      style={modalStyle.modalContainer}
       animationType="slide"
       transparent={false}
       visible={visible}
     >
-      <SafeAreaView style={modalStyle.modalTitle}>
-        <Text style={modalStyle.modalTitleText}>
-          Tap on a device to connect
-        </Text>
-        <FlatList
-          contentContainerStyle={modalStyle.modalFlatlistContiner}
-          data={devices}
-          renderItem={renderDeviceModalListItem}
-        />
+      <SafeAreaView style={modalStyle.container}>
+        <View style={modalStyle.header}>
+          <TouchableOpacity
+            onPress={closeModal}
+            style={modalStyle.cancelButton}
+          >
+            <Text style={modalStyle.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          <Text style={modalStyle.title}>
+            Select {sensorType === 'pressure' ? 'Pressure Sensor' : 'Scale'}
+          </Text>
+          <View style={modalStyle.rightPlaceholder} />
+        </View>
+        
+        {devices.length > 0 ? (
+          <FlatList
+            contentContainerStyle={modalStyle.listContainer}
+            data={devices}
+            renderItem={renderDeviceModalListItem}
+            ItemSeparatorComponent={() => <View style={modalStyle.separator} />}
+          />
+        ) : (
+          <View style={modalStyle.emptyContainer}>
+            <Text style={modalStyle.emptyText}>Scanning for devices...</Text>
+          </View>
+        )}
       </SafeAreaView>
     </Modal>
   );
 };
 
 const modalStyle = StyleSheet.create({
-  modalContainer: {
+  container: {
     flex: 1,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: '#F2F2F7', // iOS background color
   },
-  modalFlatlistContiner: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#C6C6C8', // iOS light gray border
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
     flex: 1,
-    justifyContent: "center",
   },
-  modalCellOutline: {
-    borderWidth: 1,
-    borderColor: "black",
-    alignItems: "center",
-    marginHorizontal: 20,
-    paddingVertical: 15,
-    borderRadius: 8,
+  cancelButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
-  modalTitle: {
+  cancelButtonText: {
+    color: '#007AFF', // iOS blue
+    fontSize: 17,
+    fontWeight: '400',
+  },
+  rightPlaceholder: {
+    width: 60, // Balance the cancel button on the left
+  },
+  listContainer: {
+    backgroundColor: 'white',
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#C6C6C8', // iOS light gray border
+  },
+  deviceItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: 'white',
+  },
+  deviceName: {
+    fontSize: 17,
+    fontWeight: '400',
+    color: '#000',
+  },
+  deviceId: {
+    fontSize: 14,
+    color: '#8E8E93', // iOS gray
+    marginTop: 4,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#C6C6C8', // iOS light gray border
+    marginLeft: 16,
+  },
+  emptyContainer: {
     flex: 1,
-    backgroundColor: "#f2f2f2",
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
-  modalTitleText: {
-    marginTop: 40,
-    fontSize: 30,
-    fontWeight: "bold",
-    marginHorizontal: 20,
-    textAlign: "center",
-  },
-  ctaButton: {
-    backgroundColor: "#FF6060",
-    justifyContent: "center",
-    alignItems: "center",
-    height: 50,
-    marginHorizontal: 20,
-    marginBottom: 5,
-    borderRadius: 8,
-  },
-  ctaButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "white",
+  emptyText: {
+    fontSize: 17,
+    color: '#8E8E93', // iOS gray
+    textAlign: 'center',
   },
 });
 
