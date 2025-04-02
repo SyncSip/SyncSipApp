@@ -67,7 +67,6 @@ expo-env.d.ts
 .expo/
 ios/
 app/api/generated/
-OpenApiConfig/
 
 # Native Files
 **/*.orig.*
