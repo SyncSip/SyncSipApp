@@ -1,413 +1,226 @@
-import { Box } from "@gluestack-ui/themed";
-import React, { useEffect, useRef, useState } from "react";
-import {
-  useFont
-} from "@shopify/react-native-skia";
-import { View, StyleSheet, Dimensions, SafeAreaView, Platform, StatusBar, Button, Modal, TextInput, TouchableOpacity, Text } from "react-native";
-import { CartesianChart, Line, useChartPressState } from "victory-native";
-import { DataPoint } from "@/constants/data";
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import { useBluetooth } from '@/components/BluetoothContext';
+import DeviceModal from '@/components/DeviceConnectionModal';
 
-const height = Dimensions.get("window").height;
-const width = Dimensions.get("window").width;
-const statusBarHeight = StatusBar.currentHeight || 0;
+const SplitConnectScreen = () => {
+  const {
+    requestPermissions,
+    scanForPeripherals,
+    allDevices,
+    connectToPressureSensor,
+    connectToScale,
+    disconnectFromPressureSensor,
+    disconnectFromScale,
+    connectedPressureSensor,
+    connectedScale,
+    pressureValue,
+    scaleValue
+  } = useBluetooth();
 
-const LineChart = () => {
-  type ShotPhase = 'preinfusion' | 'rampup' | 'extraction' | 'decline' | 'done';
-  const [shotPhase, setShotPhase] = useState<ShotPhase>('preinfusion');
-  const [chartData, setChartData] = useState<DataPoint[]>([]);
-  const [sensorData, setSensorData] = useState<DataPoint>({
-    timestamp: 0,
-    pressure: 0,
-    flowrate: 0,
-    weight: 0
-  });
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [dose, setDose] = useState('');
-  const [basketSize, setBasketSize] = useState('');
-  const [isRunning, setIsRunning] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const dataIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const currentTimerRef = useRef(0);
-  const lastValuesRef = useRef({
-    pressure: 0,
-    weight: 0
-  });
-
-  const font = useFont("app/assets/fonts/SpaceMono-Regular.ttf", 12)
-
-  const getNextValues = (currentPressure: number, currentWeight: number, elapsedTime: number): { pressure: number, weight: number } => {
-    const PREINFUSION_TIME = 10;
-    const RAMPUP_TIME = 3;
-    const EXTRACTION_TIME = 27;
-    const DECLINE_TIME = 10;
-    const TOTAL_TIME = PREINFUSION_TIME + RAMPUP_TIME + EXTRACTION_TIME + DECLINE_TIME;
-
-
-    const PREINFUSION_PRESSURE = 2;
-    const EXTRACTION_PRESSURE = 9;
-    const TARGET_WEIGHT = 40;
-
-
-    if (elapsedTime <= PREINFUSION_TIME) {
-      const progress = elapsedTime / PREINFUSION_TIME;
-      const pressure = PREINFUSION_PRESSURE * progress;
-      const weight = (TARGET_WEIGHT * 0.05) * progress;
-      return { pressure, weight };
-    } 
-    else if (elapsedTime <= PREINFUSION_TIME + RAMPUP_TIME) {
-      const progress = (elapsedTime - PREINFUSION_TIME) / RAMPUP_TIME;
-      const pressure = PREINFUSION_PRESSURE + (EXTRACTION_PRESSURE - PREINFUSION_PRESSURE) * progress;
-      const weight = TARGET_WEIGHT * 0.1;
-      return { pressure, weight };
-    } 
-    else if (elapsedTime <= PREINFUSION_TIME + RAMPUP_TIME + EXTRACTION_TIME) {
-      const progress = (elapsedTime - (PREINFUSION_TIME + RAMPUP_TIME)) / EXTRACTION_TIME;
-      const pressure = EXTRACTION_PRESSURE;
-      const weight = TARGET_WEIGHT * (0.1 + 0.8 * progress); 
-      return { pressure, weight };
-    } 
-    else if (elapsedTime <= TOTAL_TIME) {
-      const progress = (elapsedTime - (PREINFUSION_TIME + RAMPUP_TIME + EXTRACTION_TIME)) / DECLINE_TIME;
-      const pressure = EXTRACTION_PRESSURE * (1 - progress);
-      const weight = TARGET_WEIGHT * (0.9 + 0.1 * progress);
-      return { pressure, weight };
-    } 
-    else {
-      return { pressure: 0, weight: TARGET_WEIGHT };
-    }
-  };
+  const [isPressureModalVisible, setPressureModalVisible] = useState(false);
+  const [isScaleModalVisible, setScaleModalVisible] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(false);
 
   useEffect(() => {
-    console.log('State Update:', {
-      isRunning,
-      timer,
-      sensorDataLength: chartData.length
-    });
-  }, [isRunning, timer, chartData]);
-
-  useEffect(() => {
-    if (isRunning) {
-      console.log('Starting timer');
-      timerRef.current = setInterval(() => {
-        setTimer(prev => {
-          const newTime = prev + 0.1;
-          currentTimerRef.current = newTime;
-          return newTime;
-        });
-      }, 100);
-
-      return () => {
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          console.log('Timer cleared');
-        }
-      };
-    }
-  }, [isRunning]);
-
-  useEffect(() => {
-    if (isRunning) {
-      console.log('Starting data generation');
-      
-      dataIntervalRef.current = setInterval(() => {
-        const { pressure, weight } = getNextValues(
-          lastValuesRef.current.pressure,
-          lastValuesRef.current.weight,
-          currentTimerRef.current
-        );
-
-        const newDataPoint: DataPoint = {
-          timestamp: currentTimerRef.current,
-          pressure,
-          flowrate: pressure / 4,
-          weight
-        };
-
-        console.log('Generated new data point:', newDataPoint);
-
-        lastValuesRef.current = { pressure, weight };
-        setSensorData(newDataPoint);
-        
-        setChartData(prevData => {
-          const newData = [...prevData, newDataPoint];
-          console.log('Chart data updated, length:', newData.length);
-          return newData;
-        });
-      }, 500);
-
-      return () => {
-        if (dataIntervalRef.current) {
-          clearInterval(dataIntervalRef.current);
-          console.log('Data generation cleared');
-        }
-      };
-    }
-  }, [isRunning]);
-
-  const handleStart = () => {
-    if (dose && basketSize) {
-      console.log('Starting new shot');
-      currentTimerRef.current = 0;
-      setTimer(0);
-      setChartData([]);
-      lastValuesRef.current = { pressure: 0, weight: 0 };
-      setSensorData({
-        timestamp: 0,
-        pressure: 0,
-        flowrate: 0,
-        weight: 0
-      });
-      setIsRunning(true);
-      setModalVisible(false);
-    }
-  };
-
-  const handleStop = () => {
-    console.log('Stopping shot');
-    setIsRunning(false);
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (dataIntervalRef.current) clearInterval(dataIntervalRef.current);
-  };
-
-
-  const formatTime = (time: number): string => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    const decimals = Math.floor((time % 1) * 10);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}.${decimals}`;
-  };
-
-  useEffect(() => {
-    console.log('Chart data:', chartData);
-    console.log('Sensor data:', sensorData);
-    console.log('Is running:', isRunning);
-    console.log('Timer:', timer);
-  }, [chartData, sensorData, isRunning, timer]);
-
-  const getChartDomains = (data: DataPoint[]) => {
-    if (data.length === 0) {
-      return {
-        x: [0, 20] as [number, number],
-        y: [0, 80] as [number, number]
-      };
-    }
-
-    // Always show from 0 to current time, with some padding
-    return {
-      x: [0, Math.max(20, timer + 5)] as [number, number], // Add 5 seconds padding
-      y: [0, 80] as [number, number]
+    const checkPermissions = async () => {
+      const isGranted = await requestPermissions();
+      setPermissionGranted(isGranted);
     };
+    
+    checkPermissions();
+  }, []);
+
+  const openPressureModal = async () => {
+    if (!permissionGranted) {
+      const isGranted = await requestPermissions();
+      setPermissionGranted(isGranted);
+      if (!isGranted) return;
+    }
+    
+    scanForPeripherals();
+    setPressureModalVisible(true);
   };
 
-  console.log(sensorData, chartData)
+  const openScaleModal = async () => {
+    if (!permissionGranted) {
+      const isGranted = await requestPermissions();
+      setPermissionGranted(isGranted);
+      if (!isGranted) return;
+    }
+    
+    scanForPeripherals();
+    setScaleModalVisible(true);
+  };
 
   return (
-    <>
-      <SafeAreaView style={styles.cont}>
-        <View style={styles.timerContainer}>
-          <Text style={styles.timerText}>{formatTime(timer)}</Text>
+    <SafeAreaView style={styles.container}>
+      {/* Header Section */}
+      <View style={styles.headerContainer}>
+        <View style={styles.headerSection}>
+          <Text style={styles.sectionTitle}>Pressure Sensor</Text>
         </View>
-        <Box style={styles.chart}>
-        <CartesianChart
-            data={chartData}
-            xKey="timestamp"
-            yKeys={["pressure", "flowrate", "weight"]}
-            domain={getChartDomains(chartData)}
-            domainPadding={{ left: 20, right: 20 }}
-            xAxis={{
-              tickCount: 10,
-              lineWidth: 1,
-              formatXLabel: (value: number) => formatTime(value)
-            }}
-            yAxis={[
-              {
-                yKeys: ["pressure"],
-                axisSide: "left",
-                labelColor: "lightgreen",
-                formatYLabel: (value: number) => `${value.toFixed(1)} bar`
-              },
-              {
-                yKeys: ["flowrate", "weight"],
-                axisSide: "right",
-                labelColor: "blue",
-                formatYLabel: (value: number) => `${value.toFixed(1)}g`
-              }
-            ]}
-          >
-            {({points}) => (
-              <>
-                {points.pressure && (
-                  <Line
-                    points={points.pressure}
-                    color="lightgreen"
-                    strokeWidth={3}
-                  />
-                )}
-                {points.flowrate && (
-                  <Line
-                    points={points.flowrate}
-                    color="red"
-                    strokeWidth={3}
-                  />
-                )}
-                {points.weight && (
-                  <Line
-                    points={points.weight}
-                    color="blue"
-                    strokeWidth={3}
-                  />
-                )}
-              </>
-            )}
-          </CartesianChart>
-        </Box>
-      <View style={styles.controlsContainer}>
-          {!isRunning ? (
-            <Button 
-              title="Set Parameters" 
-              onPress={() => setModalVisible(true)} 
-            />
+        <View style={styles.headerDivider} />
+        <View style={styles.headerSection}>
+          <Text style={styles.sectionTitle}>Scale</Text>
+        </View>
+      </View>
+
+      {/* Content Section */}
+      <View style={styles.splitContainer}>
+        {/* Pressure Sensor Side */}
+        <View style={styles.sensorSection}>
+          {connectedPressureSensor ? (
+            <View style={styles.connectedContainer}>
+              <Text style={styles.connectedText}>
+                Connected to: {connectedPressureSensor.name || 'Unknown Device'}
+              </Text>
+              <Text style={styles.valueText}>
+                {pressureValue !== null ? `${pressureValue.toFixed(2)} bar` : 'Reading...'}
+              </Text>
+              <TouchableOpacity
+                style={styles.disconnectButton}
+                onPress={disconnectFromPressureSensor}
+              >
+                <Text style={styles.disconnectButtonText}>Disconnect</Text>
+              </TouchableOpacity>
+            </View>
           ) : (
-            <Button 
-              title="Stop" 
-              onPress={handleStop}
-              color="red"
-            />
+            <TouchableOpacity
+              onPress={openPressureModal}
+            >
+              <Text style={styles.connectButtonText}>Connect</Text>
+            </TouchableOpacity>
           )}
         </View>
 
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={isModalVisible}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Set Parameters</Text>
-              
-              <TextInput
-                style={styles.input}
-                placeholder="Dose (g)"
-                value={dose}
-                onChangeText={setDose}
-                keyboardType="numeric"
-              />
-              
-              <TextInput
-                style={styles.input}
-                placeholder="Basket Size (g)"
-                value={basketSize}
-                onChangeText={setBasketSize}
-                keyboardType="numeric"
-              />
+        {/* Divider */}
+        <View style={styles.divider} />
 
-              <View style={styles.modalButtons}>
-                <TouchableOpacity 
-                  style={styles.button} 
-                  onPress={() => setModalVisible(false)}
-                >
-                  <Text>Cancel</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.button, styles.startButton]} 
-                  onPress={handleStart}
-                >
-                  <Text style={styles.startButtonText}>Start</Text>
-                </TouchableOpacity>
-              </View>
+        {/* Scale Side */}
+        <View style={styles.sensorSection}>
+          {connectedScale ? (
+            <View style={styles.connectedContainer}>
+              <Text style={styles.connectedText}>
+                Connected to: {connectedScale.name || 'Unknown Device'}
+              </Text>
+              <Text style={styles.valueText}>
+                {scaleValue !== null ? `${scaleValue.toFixed(2)} g` : 'Reading...'}
+              </Text>
+              <TouchableOpacity
+                style={styles.disconnectButton}
+                onPress={disconnectFromScale}
+              >
+                <Text style={styles.disconnectButtonText}>Disconnect</Text>
+              </TouchableOpacity>
             </View>
-          </View>
-        </Modal>
+          ) : (
+            <TouchableOpacity
+              onPress={openScaleModal}
+            >
+              <Text style={styles.connectButtonText}>Connect</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Device Selection Modals */}
+      <DeviceModal
+        devices={allDevices}
+        visible={isPressureModalVisible}
+        connectToPeripheral={connectToPressureSensor}
+        closeModal={() => setPressureModalVisible(false)}
+        sensorType="pressure"
+      />
+
+      <DeviceModal
+        devices={allDevices}
+        visible={isScaleModalVisible}
+        connectToPeripheral={connectToScale}
+        closeModal={() => setScaleModalVisible(false)}
+        sensorType="scale"
+      />
     </SafeAreaView>
-    </>
   );
 };
 
-
-
 const styles = StyleSheet.create({
-  timerContainer: {
-    position: 'absolute',
-    top: 70,
-    right: 235,
-    width: '100%',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  timerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
   container: {
     flex: 1,
-    backgroundColor: 'white', 
-    paddingTop: Platform.OS === 'android' ? statusBarHeight : 0,
+    backgroundColor: '#F2F2F7', // iOS background color
   },
-  chart: {
+  headerContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#C6C6C8', // iOS light gray border
+    paddingBottom: 10,
+  },
+  headerSection: {
     flex: 1,
-    paddingLeft: 250,
-    paddingRight: 10
+    alignItems: 'center',
+    paddingVertical: 16,
   },
-  cont: {
-      width: height,
-      height: width,
-      transform: [{ rotate: '90deg' }],
-      top: 150,
-      right: 200,
+  headerDivider: {
+    width: 1,
+    backgroundColor: '#C6C6C8', // iOS light gray border
   },
-  modalContainer: {
+  splitContainer: {
     flex: 1,
+    flexDirection: 'row',
+  },
+  sensorSection: {
+    flex: 1,
+    padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    transform: [{ rotate: '90deg' }],
   },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
+  divider: {
+    width: 1,
+    backgroundColor: '#C6C6C8', // iOS light gray border
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 20,
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#000',
     textAlign: 'center',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
+  connectButtonText: {
+    color: '#007AFF', // iOS blue
+    fontSize: 17,
+    fontWeight: '400',
   },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  disconnectButton: {
+    backgroundColor: '#FF3B30', // iOS red
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
     marginTop: 20,
+    width: '80%',
+    maxWidth: 220,
   },
-  button: {
-    padding: 10,
-    borderRadius: 5,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  startButton: {
-    backgroundColor: '#007AFF',
-  },
-  startButtonText: {
+  disconnectButtonText: {
     color: 'white',
+    fontSize: 17,
+    fontWeight: '600',
   },
-  controlsContainer: {
-    position: 'absolute',
-    bottom: 20,
-    width: '100%',
+  connectedContainer: {
     alignItems: 'center',
-  }
+    width: '100%',
+  },
+  connectedText: {
+    fontSize: 15,
+    color: '#8E8E93', // iOS gray
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  valueText: {
+    fontSize: 34,
+    fontWeight: '500',
+    marginTop: 20,
+    marginBottom: 10,
+    color: '#000',
+  },
 });
-export default LineChart
+
+export default SplitConnectScreen;
