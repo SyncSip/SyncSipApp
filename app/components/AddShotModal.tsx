@@ -265,55 +265,54 @@ export default function AddShotModal({
               </View>
             </View>
             <View>
-              <Text style={styles.label}>Custom Fields</Text>
-              <KeyValueInput
-                keyValue={key}
-                setKeyValue={setKey}
-                valueValue={value}
-                setValueValue={setValue}
-                onAddField={handleAddField}
-              />
-              <View style={styles.keyValueList}>
-                {indieFields.map((field, index) => (
-                  <View key={`custom-field-${index}-${field.key}`} style={styles.keyValueItem}>
-                    <View style={styles.keyValueContent}>
-                      <Text style={styles.keyValueText}>{field.key}: {field.value}</Text>
-                    </View>
-                    <TouchableOpacity 
-                      style={styles.deleteButton}
-                      onPress={() => {
-                        const newFields = indieFields.filter((_, i) => i !== index);
-                        setIndieFields(newFields);
-                      }}
-                    >
-                      <Text style={styles.deleteButtonText}>×</Text>
-                    </TouchableOpacity>
+            <Text style={styles.label}>Custom Fields</Text>
+            <KeyValueInput
+              keyValue={key}
+              setKeyValue={setKey}
+              valueValue={value}
+              setValueValue={setValue}
+              onAddField={handleAddField}
+            />
+            <View style={styles.keyValueList}>
+              {indieFields.map((field, index) => (
+                <View key={`custom-field-${index}-${field.key}`} style={styles.keyValueItem}>
+                  <View style={styles.keyValueContent}>
+                    <Text style={styles.keyValueText}>{field.key}: {field.value}</Text>
                   </View>
-                ))}
-              </View>
+                  <TouchableOpacity 
+                    style={styles.deleteButton}
+                    onPress={() => {
+                      const newFields = indieFields.filter((_, i) => i !== index);
+                      setIndieFields(newFields);
+                    }}
+                  >
+                    <Text style={styles.deleteButtonText}>×</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
             </View>
-          </ScrollView>
+          </View>
+        </ScrollView>
 
-          <TouchableOpacity 
-            style={styles.saveButton}
-            onPress={handleSave}
-          >
-            {edit === true ? (
-              <Text style={styles.saveButtonText}>Save Shot</Text>
-            ) : (
-              <Text style={styles.saveButtonText}>Create Shot</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.cancelButton}
-            onPress={handleCancel}
-          >
-            <Text style={styles.saveButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={styles.saveButton}
+          onPress={handleSave}
+        >
+          <Text style={styles.saveButtonText}>
+            {edit === true ? 'Save Changes' : 'Create Shot'}
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.cancelButton}
+          onPress={handleCancel}
+        >
+          <Text style={styles.cancelButtonText}>Cancel</Text>
+        </TouchableOpacity>
       </View>
-    </Modal>
-  );
+    </View>
+  </Modal>
+);
 }
 
 const styles = StyleSheet.create({
@@ -337,7 +336,9 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 8,
   },
   closeText: {
     color: '#007AFF',
@@ -351,39 +352,48 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#333',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    borderColor: '#E5E5EA',
+    borderRadius: 10,
     padding: 12,
     fontSize: 16,
+    backgroundColor: '#F9F9F9',
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    backgroundColor: '#fff'
+    borderColor: '#E5E5EA',
+    borderRadius: 10,
+    backgroundColor: '#F9F9F9',
+    overflow: 'hidden',
   },
   saveButton: {
-    padding: 12,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 10,
     alignItems: 'center',
     marginTop: 15,
+    backgroundColor: '#007AFF',
   },
   cancelButton: {
-    padding: 12,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 10,
     alignItems: 'center',
     marginTop: 10,
+    backgroundColor: '#F2F2F7',
   },
   saveButtonText: {
+    color: 'white',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  cancelButtonText: {
     color: '#007AFF',
     fontSize: 17,
-    fontWeight: '400',
+    fontWeight: '600',
   },
   keyValueList: {
     marginTop: 10,
@@ -391,10 +401,10 @@ const styles = StyleSheet.create({
   keyValueItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 8,
+    backgroundColor: '#F2F2F7',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
   },
   keyValueContent: {
     flex: 1,
@@ -404,17 +414,17 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   deleteButton: {
-    backgroundColor: '#ff4444',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 10,
   },
   deleteButtonText: {
-    color: 'white',
+    color: '#FF3B30',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
   }
 });
