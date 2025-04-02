@@ -6,10 +6,14 @@ interface BluetoothContextType {
     requestPermissions: () => Promise<boolean>;
     scanForPeripherals: () => void;
     allDevices: Device[];
-    connectToDevice: (device: Device) => Promise<void>;
-    disconnectFromDevice: () => Promise<void>;
-    connectedDevice: Device | null;
+    connectToPressureSensor: (device: Device) => Promise<void>;
+    connectToScale: (device: Device) => Promise<void>;
+    disconnectFromPressureSensor: () => Promise<void>;
+    disconnectFromScale: () => Promise<void>;
+    connectedPressureSensor: Device | null;
+    connectedScale: Device | null;
     pressureValue: number | null;
+    scaleValue: number | null;
 }
 
 const BluetoothContext = createContext<BluetoothContextType | undefined>(undefined);
