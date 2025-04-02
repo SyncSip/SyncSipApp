@@ -1,29 +1,43 @@
+import React, { useState } from "react";
+import { View, Button, StyleSheet, Text, SafeAreaView } from "react-native";
 import EspressoGraph from "@/components/Graph";
-import { useState } from "react";
-import { View, Button, StyleSheet, Dimensions } from "react-native";
 
-
-
-export default function Graph(){
+export default function Graph() {
   const [isStarted, setIsStarted] = useState(false);
-  console.log(isStarted)
+  
   return (
-    <View>
-      <EspressoGraph isStarted={isStarted} />
-      <View style={styles.buttonContainer}>
-      <Button 
-        title={isStarted ? "Stop" : "Start"} 
-        onPress={() => setIsStarted(!isStarted)} 
-      />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+
+        <EspressoGraph isStarted={isStarted} />
+
+        
+        <View style={styles.buttonContainer}>
+          <Button 
+            title={isStarted ? "Stop Recording" : "Start Recording"} 
+            onPress={() => {
+              console.log("Button pressed, changing isStarted to:", !isStarted);
+              setIsStarted(!isStarted);
+            }} 
+            color={isStarted ? "#cc0000" : "#007700"}
+          />
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+  },
   buttonContainer: {
-    top: 90,
-    right: 150,
-    transform: [{rotate: "90deg"}]
+    marginTop: 20,
+    paddingHorizontal: 40,
   }
-})
+});
