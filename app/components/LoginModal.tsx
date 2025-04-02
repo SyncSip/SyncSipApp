@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Modal,
@@ -15,6 +14,7 @@ import {
 import { authApi } from '@/api/auth';
 import { getDecodedToken } from '@/utils/tokenUtils';
 import { useAuth } from './AuthContext';
+import axiosInstance from '@/api/axios';
 
 interface LoginModalProps {
   visible: boolean;
@@ -26,11 +26,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose, onLoginSucces
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loginFailed, setLoginFailed] = useState(false)
+  const [loginFailed, setLoginFailed] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   const onLoginFail = () => {
-    setLoginFailed(true)
+    setLoginFailed(true);
   }
 
   const handleLogin = async () => {
@@ -56,9 +59,55 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose, onLoginSucces
     }
   };
 
+  const handleRegister = async () => {
+    if (!username || !password || !confirmPassword || !email) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    try {
+
+      Alert.alert(email, password)
+      const response = await axiosInstance.post('/auth/register', {
+        email,
+        password,
+        name:username
+      });
+      console.log('Registration response:', response.data);
+      
+      Alert.alert(
+        'Registration Successful', 
+        'Your account has been created. You can now log in.',
+        [{ text: 'OK', onPress: () => toggleMode() }]
+      );
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      Alert.alert(
+        'Registration Failed',
+        error.response?.data?.message || 'An error occurred during registration'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setUsername('');
     setPassword('');
+    setConfirmPassword('');
+    setEmail('');
+    setLoginFailed(false);
+  };
+
+  const toggleMode = () => {
+    setIsRegistering(!isRegistering);
+    resetForm();
   };
 
   return (
@@ -73,7 +122,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose, onLoginSucces
         style={styles.centeredView}
       >
         <View style={styles.modalView}>
-          <Text style={styles.title}>Login</Text>
+          <Text style={styles.title}>{isRegistering ? 'Create Account' : 'Login'}</Text>
           
           <TextInput
             style={styles.input}
@@ -84,6 +133,18 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose, onLoginSucces
             autoCorrect={false}
           />
 
+          {isRegistering && (
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          )}
+
           <TextInput
             style={styles.input}
             placeholder="Password"
@@ -93,33 +154,57 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose, onLoginSucces
             autoCapitalize="none"
           />
 
-        {loginFailed && (
-        <Text style={styles.errorText}>
-            Invalid username or password. Please try again.
-        </Text> 
-        )}
+          {isRegistering && (
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              autoCapitalize="none"
+            />
+          )}
+
+          {loginFailed && !isRegistering && (
+            <Text style={styles.errorText}>
+              Invalid username or password. Please try again.
+            </Text> 
+          )}
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
+              style={[styles.button]}
               onPress={onClose}
               disabled={loading}
             >
-              <Text style={styles.buttonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, styles.loginButton]}
-              onPress={handleLogin}
+              style={[styles.button]}
+              onPress={isRegistering ? handleRegister : handleLogin}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text style={styles.buttonText}>Login</Text>
+                <Text style={styles.loginButtonText}>
+                  {isRegistering ? 'Register' : 'Login'}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            style={styles.switchModeContainer}
+            onPress={toggleMode}
+          >
+            <Text style={styles.switchModeText}>
+              {isRegistering
+                ? 'Already have an account? Login'
+                : 'Don\'t have an account? Register'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -175,22 +260,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loginButton: {
-    backgroundColor: '#007AFF',
+  loginButtonText: {
+    color: '#007AFF',
+    fontSize: 17,
+    fontWeight: '400',
   },
-  cancelButton: {
-    backgroundColor: '#FF3B30',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+  cancelButtonText: {
+    color: 'red',
+    fontSize: 17,
+    fontWeight: '400',
   },
   errorText: {
     color: '#FF3B30',
     fontSize: 14,
     marginBottom: 12,
     textAlign: 'center',
+  },
+  switchModeContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  switchModeText: {
+    color: '#007AFF',
+    fontSize: 16,
   },
 });
 
