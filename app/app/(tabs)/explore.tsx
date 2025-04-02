@@ -281,11 +281,11 @@ export default function ShotListScreen() {
       return;
     }
     
-    setSelectedShot(shot);
     setEditShot(true);
+    setSelectedShot(shot);
     setTimeout(() => {
       setAddShotModalVisible(true);
-    }, 0);
+    }, 50);
   };
   
   const handleCloseModal = () => {
@@ -345,17 +345,37 @@ export default function ShotListScreen() {
     }
     
     try {
+      setAddShotModalVisible(false);
+      
       const newShot = await shotsApi.create({
         ...shotData,
         userId,
       });
-      setShots(prev => [newShot, ...prev]);
-      setAddShotModalVisible(false);
+      
+      const [shotsData, machinesData, grindersData, beansData] = await Promise.all([
+        shotsApi.getAll(userId),
+        machinesApi.getAll(userId),
+        grindersApi.getAll(userId),
+        beansApi.getAll(userId),
+      ]);
+  
+      const sortedShots = shotsData.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      
+      setShots(sortedShots);
+      setMachines(machinesData);
+      setGrinders(grindersData);
+      setBeans(beansData);
+      
     } catch (error:any) {
       console.error('Server error:', error.response?.data || error);
+      Alert.alert('Error', 'Failed to save shot. Please try again.');
       throw error;
     }
   };
+  
+  
   
   const handleEditShot = async (shotData: CreateShotDto, id: string) => {
     if (!isAuthenticated || !userId) {
@@ -364,11 +384,16 @@ export default function ShotListScreen() {
     }
     
     try {
-      const newShot = await shotsApi.edit(id, {
+      const updatedShot = await shotsApi.edit(id, {
         ...shotData,
       });
-      setShots(prev => [newShot, ...prev]);
+      
+      setShots(prev => prev.map(shot => 
+        shot.id === id ? updatedShot : shot
+      ));
+      
       setAddShotModalVisible(false);
+      handleRefresh();
     } catch (error:any) {
       console.error('Server error:', error.response?.data || error);
       throw error;
@@ -496,7 +521,6 @@ export default function ShotListScreen() {
               <Button 
                 title="Add Your First Shot" 
                 onPress={() => setAddShotModalVisible(true)}
-                style={styles.emptyButton}
               />
             </View>
           )}
