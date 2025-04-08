@@ -21,6 +21,9 @@
       "permissions": [
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
         "android.permission.BLUETOOTH_CONNECT"
       ],
       "package": "com.lnart.app"
@@ -56,6 +59,12 @@
       "eas": {
         "projectId": "7d825d06-9bae-4076-851d-301f3e6f0d4f"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/7d825d06-9bae-4076-851d-301f3e6f0d4f"
     }
   }
 }
