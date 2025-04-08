@@ -14,7 +14,7 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly UsersService: UsersService) {}
 
-  @Post("")
+  @Post('')
   @ApiOperation({ summary: 'create a user' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({
@@ -24,8 +24,8 @@ export class UsersController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async create(@Body() body: CreateUserDto){
-    return await this.UsersService.create(body)
+  async create(@Body() body: CreateUserDto) {
+    return await this.UsersService.create(body);
   }
 
   @Patch('user')

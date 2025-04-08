@@ -8,9 +8,13 @@ import { DatabaseModule } from 'src/data/database.module';
 import { Shot } from 'src/data/entities/shot.entity/shot.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Machine, Shot]), DatabaseModule, ConfigModule],
+  imports: [
+    TypeOrmModule.forFeature([Machine, Shot]),
+    DatabaseModule,
+    ConfigModule,
+  ],
   providers: [MachinesService],
   controllers: [MachinesController],
-  exports: [MachinesService]
+  exports: [MachinesService],
 })
 export class MachinesModule {}

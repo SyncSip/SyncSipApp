@@ -5,7 +5,7 @@ export class ReadMachineDto {
   @IsUUID()
   @IsNotEmpty()
   @ApiProperty({
-    description: "The Machines id",
+    description: 'The Machines id',
     example: '234957689234',
   })
   id: string;
@@ -13,7 +13,7 @@ export class ReadMachineDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    description: "The machines Brand Name",
+    description: 'The machines Brand Name',
     example: 'La Marzocco',
   })
   brandName: string;
@@ -21,7 +21,7 @@ export class ReadMachineDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    description: "The Machine Model",
+    description: 'The Machine Model',
     example: 'Linea Micra',
   })
   model: string;
@@ -29,55 +29,54 @@ export class ReadMachineDto {
   @IsUUID()
   @IsNotEmpty()
   @ApiProperty({
-    description: "The users id the machine belongs to",
-    example: "7963432324987hr"
+    description: 'The users id the machine belongs to',
+    example: '7963432324987hr',
   })
   userId: string;
 }
 
-
 export class CreateMachineDto {
-    @IsString()
-    @IsNotEmpty()
-    @ApiProperty({
-      description: "The machines Brand Name",
-      example: 'La Marzocco',
-    })
-    brandName: string;
-  
-    @IsString()
-    @IsNotEmpty()
-    @ApiProperty({
-      description: "The Machine Model",
-      example: 'Linea Micra',
-    })
-    model: string;
-  
-    @IsUUID()
-    @IsNotEmpty()
-    @ApiProperty({
-      description: "The users id the machine belongs to",
-      example: "7963432324987hr"
-    })
-    userId: string;
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'The machines Brand Name',
+    example: 'La Marzocco',
+  })
+  brandName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'The Machine Model',
+    example: 'Linea Micra',
+  })
+  model: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'The users id the machine belongs to',
+    example: '7963432324987hr',
+  })
+  userId: string;
 }
 
 export class EditMachineDto {
   @IsString()
   @IsOptional()
   @ApiProperty({
-    description: "The machines Brand Name",
+    description: 'The machines Brand Name',
     example: 'La Marzocco',
-    required: false
+    required: false,
   })
   brandName?: string;
 
   @IsString()
   @IsOptional()
   @ApiProperty({
-    description: "The Machine Model",
+    description: 'The Machine Model',
     example: 'Linea Micra',
-    required: false
+    required: false,
   })
   model?: string;
 }

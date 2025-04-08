@@ -1,5 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsUUID, IsNumber, IsBoolean, IsObject, Min, IsOptional, IsDate, ValidateNested, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsUUID,
+  IsNumber,
+  IsBoolean,
+  IsObject,
+  Min,
+  IsOptional,
+  IsDate,
+  ValidateNested,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { CustomField } from 'src/data/entities/shot.entity/shot.entity';
 
@@ -197,18 +209,18 @@ export class ReadShotDto {
       properties: {
         pressure: { type: 'number', example: 9.0 },
         flow: { type: 'number', example: 2.0 },
-        temperature: { type: 'number', example: 93.5 }
-      }
+        temperature: { type: 'number', example: 93.5 },
+      },
     },
     example: [
       { pressure: 9.0, flow: 2.0, temperature: 93.5 },
       { pressure: 9.1, flow: 2.1, temperature: 93.4 },
       { pressure: 9.0, flow: 2.0, temperature: 93.3 },
-      { pressure: 8.9, flow: 1.9, temperature: 93.2 }
+      { pressure: 8.9, flow: 1.9, temperature: 93.2 },
     ],
     nullable: true,
   })
-  graphData?: any
+  graphData?: any;
 
   @IsString()
   @ApiProperty({
@@ -251,22 +263,22 @@ export class ReadShotDto {
       properties: {
         key: {
           type: 'string',
-          example: "Top-Note"
+          example: 'Top-Note',
         },
         value: {
           type: 'string',
-          example: "floral"
-        }
-      }
+          example: 'floral',
+        },
+      },
     },
     example: [
-      { key: "Top-Note", value: "floral" },
-      { key: "Heart-Note", value: "fruity" },
-      { key: "Bottom-Note", value: "tangy" },
+      { key: 'Top-Note', value: 'floral' },
+      { key: 'Heart-Note', value: 'fruity' },
+      { key: 'Bottom-Note', value: 'tangy' },
     ],
-    nullable: true
+    nullable: true,
   })
-  customFields: CustomField[]
+  customFields: CustomField[];
 }
 
 export class CreateShotDto {
@@ -315,7 +327,7 @@ export class CreateShotDto {
     description: 'The identifier of the machine used',
     example: '123e4567-e89b-12d3-a456-426614174002',
     format: 'uuid',
-    nullable: true
+    nullable: true,
   })
   machineId: string | null;
 
@@ -325,7 +337,7 @@ export class CreateShotDto {
     description: 'The identifier of the grinder used',
     example: '123e4567-e89b-12d3-a456-426614174003',
     format: 'uuid',
-    nullable: true
+    nullable: true,
   })
   grinderId: string | null;
 
@@ -335,7 +347,7 @@ export class CreateShotDto {
     description: 'The identifier of the beans used',
     example: '123e4567-e89b-12d3-a456-426614174004',
     format: 'uuid',
-    nullable: true
+    nullable: true,
   })
   beansId: string | null;
 
@@ -349,25 +361,25 @@ export class CreateShotDto {
       properties: {
         pressure: { type: 'number', example: 9.0 },
         flow: { type: 'number', example: 2.0 },
-        temperature: { type: 'number', example: 93.5 }
-      }
+        temperature: { type: 'number', example: 93.5 },
+      },
     },
     example: [
       { pressure: 9.0, flow: 2.0, temperature: 93.5 },
       { pressure: 9.1, flow: 2.1, temperature: 93.4 },
       { pressure: 9.0, flow: 2.0, temperature: 93.3 },
-      { pressure: 8.9, flow: 1.9, temperature: 93.2 }
+      { pressure: 8.9, flow: 1.9, temperature: 93.2 },
     ],
     nullable: true,
   })
-  graphData?: any
+  graphData?: any;
 
   @IsOptional()
   @IsString()
   @ApiProperty({
     description: 'The group identifier',
     example: 'Fruity',
-    nullable: true
+    nullable: true,
   })
   group: string;
 
@@ -388,22 +400,22 @@ export class CreateShotDto {
       properties: {
         key: {
           type: 'string',
-          example: "Top-Note"
+          example: 'Top-Note',
         },
         value: {
           type: 'string',
-          example: "floral"
-        }
-      }
+          example: 'floral',
+        },
+      },
     },
     example: [
-      { key: "Top-Note", value: "floral" },
-      { key: "Heart-Note", value: "fruity" },
-      { key: "Bottom-Note", value: "tangy" },
+      { key: 'Top-Note', value: 'floral' },
+      { key: 'Heart-Note', value: 'fruity' },
+      { key: 'Bottom-Note', value: 'tangy' },
     ],
-    nullable: true
+    nullable: true,
   })
-  customFields: CustomField[]
+  customFields: CustomField[];
 }
 
 export class EditShotDto {
@@ -452,7 +464,7 @@ export class EditShotDto {
     description: 'The identifier of the machine used',
     example: '123e4567-e89b-12d3-a456-426614174002',
     format: 'uuid',
-    nullable: true
+    nullable: true,
   })
   machineId?: string;
 
@@ -462,7 +474,7 @@ export class EditShotDto {
     description: 'The identifier of the grinder used',
     example: '123e4567-e89b-12d3-a456-426614174003',
     format: 'uuid',
-    nullable: true
+    nullable: true,
   })
   grinderId?: string;
 
@@ -472,7 +484,7 @@ export class EditShotDto {
     description: 'The identifier of the beans used',
     example: '123e4567-e89b-12d3-a456-426614174004',
     format: 'uuid',
-    nullable: true
+    nullable: true,
   })
   beansId?: string;
 
@@ -486,25 +498,25 @@ export class EditShotDto {
       properties: {
         pressure: { type: 'number', example: 9.0 },
         flow: { type: 'number', example: 2.0 },
-        temperature: { type: 'number', example: 93.5 }
-      }
+        temperature: { type: 'number', example: 93.5 },
+      },
     },
     example: [
       { pressure: 9.0, flow: 2.0, temperature: 93.5 },
       { pressure: 9.1, flow: 2.1, temperature: 93.4 },
       { pressure: 9.0, flow: 2.0, temperature: 93.3 },
-      { pressure: 8.9, flow: 1.9, temperature: 93.2 }
+      { pressure: 8.9, flow: 1.9, temperature: 93.2 },
     ],
     nullable: true,
   })
-  graphData?: any
+  graphData?: any;
 
   @IsString()
   @IsOptional()
   @ApiProperty({
     description: 'The group identifier',
     example: 'Fruity',
-    nullable:true
+    nullable: true,
   })
   group?: string;
 
@@ -527,22 +539,22 @@ export class EditShotDto {
       properties: {
         key: {
           type: 'string',
-          example: "Top-Note"
+          example: 'Top-Note',
         },
         value: {
           type: 'string',
-          example: "floral"
-        }
-      }
+          example: 'floral',
+        },
+      },
     },
     example: [
-      { key: "Top-Note", value: "floral" },
-      { key: "Heart-Note", value: "fruity" },
-      { key: "Bottom-Note", value: "tangy" },
+      { key: 'Top-Note', value: 'floral' },
+      { key: 'Heart-Note', value: 'fruity' },
+      { key: 'Bottom-Note', value: 'tangy' },
     ],
-    nullable: true
+    nullable: true,
   })
-  customFields: CustomField[]
+  customFields: CustomField[];
 }
 
 export class DeleteShotDto {

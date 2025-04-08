@@ -26,7 +26,6 @@ import { DatabaseService } from './database.service';
     }),
   ],
   exports: [TypeOrmModule, DatabaseService],
-  providers: [DatabaseService]
-
+  providers: [DatabaseService],
 })
 export class DatabaseModule {}

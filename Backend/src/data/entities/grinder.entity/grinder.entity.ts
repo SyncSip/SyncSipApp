@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
 import { Shot } from '../shot.entity/shot.entity';
 import { User } from '../user.entity/user.entity';
 
@@ -14,11 +21,11 @@ export class Grinder {
   model: string;
 
   @Column('uuid')
-    userId: string
-  
+  userId: string;
+
   @ManyToOne(() => User)
-  @JoinColumn({name: 'userId'})
-  user: User
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
   @OneToMany(() => Shot, (shot) => shot.grinder)
   shots: Shot[];

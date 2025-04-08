@@ -9,9 +9,13 @@ import { Grinder } from 'src/data/entities/grinder.entity/grinder.entity';
 import { MachinesService } from 'src/machines/machines.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Grinder, Shot]), DatabaseModule, ConfigModule],
+  imports: [
+    TypeOrmModule.forFeature([Grinder, Shot]),
+    DatabaseModule,
+    ConfigModule,
+  ],
   providers: [GrindersService],
   controllers: [GrindersController],
-  exports: [GrindersService]
+  exports: [GrindersService],
 })
 export class GrindersModule {}

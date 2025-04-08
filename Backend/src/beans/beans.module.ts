@@ -8,7 +8,11 @@ import { Shot } from 'src/data/entities/shot.entity/shot.entity';
 import { Bean } from 'src/data/entities/beans.entity/beans.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Bean, Shot]), DatabaseModule, ConfigModule],
+  imports: [
+    TypeOrmModule.forFeature([Bean, Shot]),
+    DatabaseModule,
+    ConfigModule,
+  ],
   providers: [BeansService],
   controllers: [BeansController],
 })

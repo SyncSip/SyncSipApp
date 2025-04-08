@@ -20,18 +20,18 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-  .setTitle('SyncSipApi')
-  .setDescription('API For the SyncSip App')
-  .setVersion('1.0')
-  .build();
-  
+    .setTitle('SyncSipApi')
+    .setDescription('API For the SyncSip App')
+    .setVersion('1.0')
+    .build();
+
   const document = SwaggerModule.createDocument(app, config);
-  
+
   const yamlString = YAML.stringify(document);
   fs.writeFileSync('./openapi/openapi-spec.yaml', yamlString);
-  
+
   SwaggerModule.setup('docs', app, document);
-  
+
   await app.listen(port);
 }
 bootstrap();

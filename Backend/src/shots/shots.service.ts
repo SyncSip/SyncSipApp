@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DatabaseService } from 'src/data/database.service';
@@ -17,57 +21,56 @@ export class ShotsService {
 
   async get(id: string): Promise<ReadShotDto> {
     try {
-          const shot = await this.shotRepository.findOne({
-            where: {
-              id: id
-            },
-            relations: {
-              machine: true,
-              grinder: true,
-              beans: true
-            }
-          });
-    if(!shot){
-      throw new NotFoundException()
-    }
-    return shot
+      const shot = await this.shotRepository.findOne({
+        where: {
+          id: id,
+        },
+        relations: {
+          machine: true,
+          grinder: true,
+          beans: true,
+        },
+      });
+      if (!shot) {
+        throw new NotFoundException();
+      }
+      return shot;
     } catch (error) {
-      throw error
+      throw error;
     }
-
-}  
+  }
 
   async getAll(userId: string): Promise<ReadShotDto[]> {
     try {
-        console.log('Fetching shots for userId:', userId);
-        const shots = await this.shotRepository.find({
-          where: {
-            userId:userId
-          },
-          relations: {
-            machine: true,
-            grinder: true,
-            beans: true
-          }
-        });
-        if (!shots) {
-            return [];
-        }
-        return shots;
+      console.log('Fetching shots for userId:', userId);
+      const shots = await this.shotRepository.find({
+        where: {
+          userId: userId,
+        },
+        relations: {
+          machine: true,
+          grinder: true,
+          beans: true,
+        },
+      });
+      if (!shots) {
+        return [];
+      }
+      return shots;
     } catch (error) {
-        console.error('Error fetching shots:', error);
-        throw new InternalServerErrorException('Error fetching shots');
+      console.error('Error fetching shots:', error);
+      throw new InternalServerErrorException('Error fetching shots');
     }
-}
+  }
 
   async create(createShotDto: CreateShotDto): Promise<ReadShotDto> {
     try {
       const shot = this.shotRepository.create(createShotDto);
-      await this.shotRepository.save(shot)
-      return shot      
+      await this.shotRepository.save(shot);
+      return shot;
     } catch (error) {
-      console.error("Error creating shot: ", error)
-      throw new InternalServerErrorException()
+      console.error('Error creating shot: ', error);
+      throw new InternalServerErrorException();
     }
   }
 
@@ -81,12 +84,12 @@ export class ShotsService {
     return newShot;
   }
 
-  async delete(id:string): Promise<ReadShotDto>{
-    const shot = await this.shotRepository.findOneBy({id: id})
-    if(!shot){
-      throw new NotFoundException
+  async delete(id: string): Promise<ReadShotDto> {
+    const shot = await this.shotRepository.findOneBy({ id: id });
+    if (!shot) {
+      throw new NotFoundException();
     }
-    await this.shotRepository.remove(shot)
-    return shot
+    await this.shotRepository.remove(shot);
+    return shot;
   }
 }

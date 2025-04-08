@@ -13,11 +13,11 @@ import { RefreshTokenStrategy } from './refresh-token-strategy';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
-      signOptions: {expiresIn: "24h"}
-    })
+      signOptions: { expiresIn: '24h' },
+    }),
   ],
   providers: [AuthService, LocalStrategy, RefreshTokenStrategy],
   controllers: [AuthController],
-  exports: [AuthService]
+  exports: [AuthService],
 })
 export class AuthModule {}

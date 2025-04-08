@@ -7,63 +7,64 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class BeansService {
-    constructor(
-        @InjectRepository(Bean)
-        private beanRepository: Repository<Bean>,
-        @InjectRepository(Shot)
-        private shotRepository: Repository<Shot>
-    ){}
+  constructor(
+    @InjectRepository(Bean)
+    private beanRepository: Repository<Bean>,
+    @InjectRepository(Shot)
+    private shotRepository: Repository<Shot>,
+  ) {}
 
-    async getOne(id: string): Promise<ReadBeanDto>{
-        const bean = await this.beanRepository.findOneBy({id: id})
-        return bean
+  async getOne(id: string): Promise<ReadBeanDto> {
+    const bean = await this.beanRepository.findOneBy({ id: id });
+    return bean;
+  }
+
+  async getMany(userId: string): Promise<ReadBeanDto[]> {
+    try {
+      const beans = await this.beanRepository.find({
+        where: { userId: userId },
+        order: {
+          full: 'DESC',
+        },
+      });
+      return beans;
+    } catch (error) {
+      throw error;
     }
+  }
 
-    async getMany(userId: string): Promise<ReadBeanDto[]>{
-        try {
-            const beans = await this.beanRepository.find({where: {userId: userId}, order: {
-                full: "DESC"
-            }})
-            return beans
-            
-        } catch (error) {
-            throw error
-        }
+  async create(createBeanDto: CreateBeanDto): Promise<ReadBeanDto> {
+    try {
+      const newbean = this.beanRepository.create(createBeanDto);
+      await this.beanRepository.save(newbean);
+      return newbean;
+    } catch (error) {
+      throw error;
     }
+  }
 
-    async create(createBeanDto: CreateBeanDto): Promise<ReadBeanDto>{
-        try {
-            const newbean = this.beanRepository.create(createBeanDto)
-            await this.beanRepository.save(newbean)
-            return newbean
-        } catch (error) {
-            throw error
-        }
+  async delete(id: string): Promise<ReadBeanDto> {
+    const bean = await this.beanRepository.findOneBy({ id: id });
+    if (!bean) {
+      throw new NotFoundException();
     }
+    const update = await this.shotRepository.update(
+      { beansId: id },
+      { beansId: null },
+    );
 
-    async delete(id:string): Promise<ReadBeanDto>{
-        const bean = await this.beanRepository.findOneBy({id:id})
-        if(!bean){
-            throw new NotFoundException()
-        }
-        const update = await this.shotRepository.update(
-            { beansId: id },
-            { beansId: null }
-        );
+    await this.beanRepository.remove(bean);
+    return bean;
+  }
 
-        await this.beanRepository.remove(bean)
-        return bean
+  async edit(editBeanDto: EditBeanDto, id: string): Promise<ReadBeanDto> {
+    const bean = await this.beanRepository.findOneBy({ id: id });
+    if (!bean) {
+      throw new NotFoundException();
     }
+    const updatedbean = this.beanRepository.merge(bean, editBeanDto);
+    await this.beanRepository.save(updatedbean);
 
-    async edit(editBeanDto: EditBeanDto, id:string): Promise<ReadBeanDto>{
-        const bean = await this.beanRepository.findOneBy({id:id})
-        if (!bean) {
-            throw new NotFoundException();
-        }
-        const updatedbean = this.beanRepository.merge(bean, editBeanDto)
-        await this.beanRepository.save(updatedbean)
-
-        return updatedbean
-    }
-
+    return updatedbean;
+  }
 }

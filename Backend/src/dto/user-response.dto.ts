@@ -20,7 +20,6 @@ export class UserResponseDto {
 }
 
 export class LoginResponseDto {
-
   @IsNotEmpty()
   @ApiProperty({
     description: "The user's id",
@@ -30,9 +29,9 @@ export class LoginResponseDto {
 
   @IsNotEmpty()
   @ApiProperty({
-    description: "the access token"
+    description: 'the access token',
   })
-  accessToken: string
+  accessToken: string;
 }
 
 export class RefreshDto {
@@ -43,7 +42,7 @@ export class RefreshDto {
     example: '234957689234',
   })
   id: string;
-  
+
   @IsNotEmpty()
   @ApiProperty({
     description: "The user's refresh token",

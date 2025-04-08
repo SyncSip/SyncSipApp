@@ -13,11 +13,14 @@ export class AuthController {
 
   @UseGuards(LocalStrategy)
   @Post('/login')
-  async login(@Body() body: {username: string, password: string}, @Req() req) {
-    console.log(req)
+  async login(
+    @Body() body: { username: string; password: string },
+    @Req() req,
+  ) {
+    console.log(req);
     const login = await this.authService.login(body.username, body.password);
-    console.log(login)
-    return login
+    console.log(login);
+    return login;
   }
 
   @UseGuards(LocalStrategy)
@@ -33,8 +36,8 @@ export class AuthController {
   }
 
   @Post('/register')
-  async register(@Body() body: CreateUserDto){
-    console.log(body)
-    return await this.authService.register(body)
+  async register(@Body() body: CreateUserDto) {
+    console.log(body);
+    return await this.authService.register(body);
   }
 }
