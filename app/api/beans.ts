@@ -20,7 +20,7 @@ export const beansApi = {
   },
 
   edit: async (id: string, shot: EditBeanDto) => {
-    const response = await axios.patch<ReadBeanDto>(`/beans/one/${id}`, shot);
+    const response = await axios.patch<ReadBeanDto>(`/beans/${id}`, shot);
     return response.data;
   },
 
