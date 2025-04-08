@@ -24,8 +24,6 @@ export class BeansService {
             const beans = await this.beanRepository.find({where: {userId: userId}, order: {
                 full: "DESC"
             }})
-
-            console.log("ahhh: ", beans)
             return beans
             
         } catch (error) {
