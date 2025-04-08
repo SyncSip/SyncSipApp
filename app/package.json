@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "generate-api": "openapi --input ../OpenApiConfig/openapi-spec.yaml --output ./api/generated"
+    "generate-api": "openapi --input ../Backend/openapi/openapi-spec.yaml --output ./api/generated"
   },
   "jest": {
     "preset": "jest-expo"
@@ -42,6 +42,7 @@
     "expo-status-bar": "~2.0.1",
     "expo-symbols": "~0.2.1",
     "expo-system-ui": "~4.0.7",
+    "expo-updates": "~0.27.4",
     "expo-web-browser": "~14.0.2",
     "jwt-decode": "^4.0.0",
     "openapi-typescript-codegen": "^0.29.0",
