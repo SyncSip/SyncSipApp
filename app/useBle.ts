@@ -3,6 +3,7 @@ import { PermissionsAndroid, Platform } from "react-native"
 import { BleManager, Device, Subscription } from 'react-native-ble-plx'
 import * as ExpoDevice from 'expo-device'
 import { Buffer } from 'buffer'
+import * as haptics from 'expo-haptics'
 
 // Service and characteristic UUIDs
 const PRESSURE_SERVICE_UUID = "0000181A-0000-1000-8000-00805F9B34FB"
@@ -238,6 +239,7 @@ function useBle(): bleAPI {
             );
             
             console.log("Pressure sensor connection and monitoring set up successfully");
+            haptics.impactAsync(haptics.ImpactFeedbackStyle.Heavy)
         } catch (error) {
             console.log("Pressure sensor connection error:", error);
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -302,6 +304,7 @@ function useBle(): bleAPI {
             );
             
             console.log("Scale connection and monitoring set up successfully");
+            haptics.impactAsync(haptics.ImpactFeedbackStyle.Heavy)
         } catch (error) {
             console.log("Scale connection error:", error);
             const errorMessage = error instanceof Error ? error.message : String(error);
