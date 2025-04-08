@@ -21,8 +21,11 @@ export class BeansService {
 
     async getMany(userId: string): Promise<ReadBeanDto[]>{
         try {
-            const beans = await this.beanRepository.findBy({userId: userId})
-            console.log(beans)
+            const beans = await this.beanRepository.find({where: {userId: userId}, order: {
+                full: "DESC"
+            }})
+
+            console.log("ahhh: ", beans)
             return beans
             
         } catch (error) {
