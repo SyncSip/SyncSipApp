@@ -1,8 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Dimensions, StyleSheet, Text as RNText, TextInput, TouchableOpacity } from 'react-native';
+import { View, Dimensions, StyleSheet, Text as RNText, TextInput, TouchableOpacity, Modal, Alert, ScrollView } from 'react-native';
 import Svg, { Path, G, Line, Text, Rect } from 'react-native-svg';
 import * as d3 from 'd3';
 import { useBluetooth } from './BluetoothContext';
+import { CreateShotDto, ReadBeanDto, ReadGrinderDto, ReadMachineDto } from '@/api/generated';
+import { shotsApi } from '@/api/shots';
+import { useAuth } from '@/components/AuthContext';
+import { Picker } from '@react-native-picker/picker';
+import { machinesApi } from '@/api/machines';
+import { grindersApi } from '@/api/grinders';
+import { beansApi } from '@/api/beans';
 
 interface DataPoint {
   time: number;
@@ -11,8 +18,13 @@ interface DataPoint {
   flowRate: number|null;
 }
 
-const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
-  const [data, setData] = useState<DataPoint[]>([]);
+interface EspressoGraphProps {
+  isStarted: boolean;
+  data?: DataPoint[]
+}
+
+const EspressoGraph = ({ isStarted, data }: EspressoGraphProps) => {
+  const [dataPoints, setData] = useState<DataPoint[]>(data ? data : []);
   const [currentPressure, setCurrentPressure] = useState(0);
   const [currentWeight, setCurrentWeight] = useState(0);
   const [currentFlowRate, setCurrentFlowRate] = useState<number |null>(0);
@@ -21,6 +33,18 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
   const [pressurePathString, setPressurePathString] = useState('');
   const [weightPathString, setWeightPathString] = useState('');
   const [isEditingDose, setIsEditingDose] = useState(false);
+  const [isSaveModalVisible, setIsSaveModalVisible] = useState(false);
+  const [shotName, setShotName] = useState('');
+  
+  const [machines, setMachines] = useState<ReadMachineDto[]>([]);
+  const [grinders, setGrinders] = useState<ReadGrinderDto[]>([]);
+  const [beans, setBeans] = useState<ReadBeanDto[]>([]);
+  const [selectedMachineId, setSelectedMachineId] = useState<string | null>(null);
+  const [selectedGrinderId, setSelectedGrinderId] = useState<string | null>(null);
+  const [selectedBeanId, setSelectedBeanId] = useState<string | null>(null);
+  const [isLoadingEquipment, setIsLoadingEquipment] = useState(false);
+  
+  const { isAuthenticated, userId } = useAuth();
   
   const animationFrameId = useRef<number | null>(null);
   const startTime = useRef<number>(0);
@@ -28,7 +52,7 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
   const lastWeightTime = useRef<number>(0);
   const [xDomain, setXDomain] = useState([0, 50]);
   
-  const { pressureValue, scaleValue, flowRate } = useBluetooth();
+  const { pressureValue, scaleValue, flowRate, timerValue } = useBluetooth();
   
   const SCREEN_WIDTH = Dimensions.get('window').height;
   const margin = { top: 10, right: 250, bottom: 10, left: 120 };
@@ -61,6 +85,29 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
     if (weight <= 0) return 0;
     const dose = parseFloat(doseWeight);
     return dose / weight;
+  };
+
+  // Fetch equipment data when save modal opens
+  const fetchEquipmentData = async () => {
+    if (!isAuthenticated || !userId) return;
+    
+    try {
+      setIsLoadingEquipment(true);
+      const [machinesData, grindersData, beansData] = await Promise.all([
+        machinesApi.getAll(userId),
+        grindersApi.getAll(userId),
+        beansApi.getAll(userId),
+      ]);
+      
+      setMachines(machinesData);
+      setGrinders(grindersData);
+      setBeans(beansData);
+    } catch (error) {
+      console.error('Error fetching equipment data:', error);
+      Alert.alert('Error', 'Failed to load equipment data');
+    } finally {
+      setIsLoadingEquipment(false);
+    }
   };
 
   useEffect(() => {
@@ -101,6 +148,12 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
       console.log("Graph recording started");
     } else {
       console.log("Graph recording stopped");
+      
+      // If we have data points and we just stopped, show save modal
+      if (dataPoints.length > 0 && startTime.current > 0) {
+        setIsSaveModalVisible(true);
+        fetchEquipmentData();
+      }
     }
 
     return () => {
@@ -128,6 +181,75 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
       
       return newData;
     });
+  };
+
+  const saveShot = async () => {
+    if (!isAuthenticated || !userId) {
+      Alert.alert('Not Logged In', 'Please log in to save shots');
+      return;
+    }
+
+    if (dataPoints.length === 0) {
+      Alert.alert('No Data', 'There is no shot data to save');
+      return;
+    }
+
+    try {
+      // Calculate brew time from the last data point
+      const brewTime = dataPoints[dataPoints.length - 1]?.time || 0;
+      
+      // Get the final weight from the last data point
+      const finalWeight = dataPoints[dataPoints.length - 1]?.weight || 0;
+      
+      // Create the shot data object
+      const shotData: CreateShotDto = {
+        time: brewTime,
+        weight: finalWeight,
+        dose: parseFloat(doseWeight),
+        machineId: selectedMachineId,
+        grinderId: selectedGrinderId,
+        beansId: selectedBeanId,
+        userId: userId,
+        // Store the full graph data
+        graphData: dataPoints.map(point => ({
+          time: point.time,
+          pressure: point.pressure,
+          weight: point.weight,
+          flowRate: point.flowRate
+        })),
+        group: shotName || null,
+        starred: false,
+        customFields: [
+          { key: 'Peak Pressure', value: Math.max(...dataPoints.map(dp => dp.pressure)).toFixed(1) + ' bar' },
+          { key: 'Peak Flow Rate', value: Math.max(...dataPoints.filter(dp => dp.flowRate !== null).map(dp => dp.flowRate || 0)).toFixed(1) + ' g/s' },
+          { key: 'Brew Ratio', value: '1:' + (finalWeight / parseFloat(doseWeight)).toFixed(1) }
+        ]
+      };
+
+      // Save the shot
+      await shotsApi.create(shotData);
+      
+      Alert.alert('Success', 'Shot saved successfully');
+      setIsSaveModalVisible(false);
+      
+      // Reset states for next time
+      setShotName('');
+      setSelectedMachineId(null);
+      setSelectedGrinderId(null);
+      setSelectedBeanId(null);
+      
+    } catch (error) {
+      console.error('Error saving shot:', error);
+      Alert.alert('Error', 'Failed to save shot. Please try again.');
+    }
+  };
+
+  const handleDismissSave = () => {
+    setIsSaveModalVisible(false);
+    setShotName('');
+    setSelectedMachineId(null);
+    setSelectedGrinderId(null);
+    setSelectedBeanId(null);
   };
 
   const xTicks = xScale.ticks(10);
@@ -259,7 +381,168 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
         <RNText style={styles.statusText}>
           {isStarted ? 'Recording' : 'Stopped'}
         </RNText>
+        
+        {!isStarted && dataPoints.length > 0 && (
+          <TouchableOpacity 
+            style={styles.saveButton}
+            onPress={() => {
+              setIsSaveModalVisible(true);
+              fetchEquipmentData();
+            }}
+          >
+            <RNText style={styles.saveButtonText}>Save Shot</RNText>
+          </TouchableOpacity>
+        )}
       </View>
+      
+      {/* Save Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isSaveModalVisible}
+        onRequestClose={handleDismissSave}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ScrollView contentContainerStyle={styles.modalScrollContent}>
+              <RNText style={styles.modalTitle}>Save Espresso Shot</RNText>
+              
+              <View style={styles.shotInfoContainer}>
+                <View style={styles.shotInfoRow}>
+                  <RNText style={styles.shotInfoLabel}>Dose:</RNText>
+                  <RNText style={styles.shotInfoValue}>{doseWeight}g</RNText>
+                </View>
+                
+                <View style={styles.shotInfoRow}>
+                  <RNText style={styles.shotInfoLabel}>Yield:</RNText>
+                  <RNText style={styles.shotInfoValue}>
+                    {dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].weight.toFixed(1) : '0'}g
+                  </RNText>
+                </View>
+                
+                <View style={styles.shotInfoRow}>
+                  <RNText style={styles.shotInfoLabel}>Time:</RNText>
+                  <RNText style={styles.shotInfoValue}>
+                    {dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].time.toFixed(1) : '0'}s
+                  </RNText>
+                </View>
+                
+                <View style={styles.shotInfoRow}>
+                  <RNText style={styles.shotInfoLabel}>Ratio:</RNText>
+                  <RNText style={styles.shotInfoValue}>
+                    1:{dataPoints.length > 0 ? (dataPoints[dataPoints.length - 1].weight / parseFloat(doseWeight)).toFixed(1) : '0'}
+                  </RNText>
+                </View>
+                
+                <View style={styles.shotInfoRow}>
+                  <RNText style={styles.shotInfoLabel}>Peak Pressure:</RNText>
+                  <RNText style={styles.shotInfoValue}>
+                    {dataPoints.length > 0 ? Math.max(...dataPoints.map(dp => dp.pressure)).toFixed(1) : '0'} bar
+                  </RNText>
+                </View>
+              </View>
+              
+              <View style={styles.inputContainer}>
+                <RNText style={styles.inputLabel}>Shot Name (optional):</RNText>
+                <TextInput
+                  style={styles.input}
+                  value={shotName}
+                  onChangeText={setShotName}
+                  placeholder="Morning espresso, Test shot, etc."
+                />
+              </View>
+              
+              {/* Equipment Selection */}
+              {isLoadingEquipment ? (
+                <View style={styles.loadingContainer}>
+                  <RNText>Loading equipment data...</RNText>
+                </View>
+              ) : (
+                <>
+                  {/* Machine Selection */}
+                  <View style={styles.pickerContainer}>
+                    <RNText style={styles.inputLabel}>Machine:</RNText>
+                    <View style={styles.pickerWrapper}>
+                      <Picker
+                        selectedValue={selectedMachineId}
+                        onValueChange={(value) => setSelectedMachineId(value)}
+                        style={styles.picker}
+                      >
+                        <Picker.Item label="Select a machine" value={null} />
+                        {machines.map((machine) => (
+                          <Picker.Item
+                            key={`machine-${machine.id}`}
+                            label={`${machine.brandName} ${machine.model}`}
+                            value={machine.id}
+                          />
+                        ))}
+                      </Picker>
+                    </View>
+                  </View>
+                  
+                  {/* Grinder Selection */}
+                  <View style={styles.pickerContainer}>
+                    <RNText style={styles.inputLabel}>Grinder:</RNText>
+                    <View style={styles.pickerWrapper}>
+                      <Picker
+                        selectedValue={selectedGrinderId}
+                        onValueChange={(value) => setSelectedGrinderId(value)}
+                        style={styles.picker}
+                      >
+                        <Picker.Item label="Select a grinder" value={null} />
+                        {grinders.map((grinder) => (
+                          <Picker.Item
+                            key={`grinder-${grinder.id}`}
+                            label={`${grinder.brandName} ${grinder.model}`}
+                            value={grinder.id}
+                          />
+                        ))}
+                      </Picker>
+                    </View>
+                  </View>
+                  
+                  {/* Bean Selection */}
+                  <View style={styles.pickerContainer}>
+                    <RNText style={styles.inputLabel}>Beans:</RNText>
+                    <View style={styles.pickerWrapper}>
+                      <Picker
+                        selectedValue={selectedBeanId}
+                        onValueChange={(value) => setSelectedBeanId(value)}
+                        style={styles.picker}
+                      >
+                        <Picker.Item label="Select beans" value={null} />
+                        {beans.map((bean) => (
+                          <Picker.Item
+                            key={`bean-${bean.id}`}
+                            label={`${bean.roastery} - ${bean.bean}`}
+                            value={bean.id}
+                          />
+                        ))}
+                      </Picker>
+                    </View>
+                  </View>
+                </>
+              )}
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={handleDismissSave}
+                >
+                  <RNText style={styles.cancelButtonText}>Cancel</RNText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.confirmButton]}
+                  onPress={saveShot}
+                >
+                  <RNText style={styles.confirmButtonText}>Save Shot</RNText>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -386,6 +669,125 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 14,
+    marginRight: 15,
+  },
+  saveButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 5,
+  },
+  saveButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+    maxWidth: 400,
+    maxHeight: '80%',
+  },
+  modalScrollContent: {
+    paddingBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  shotInfoContainer: {
+    marginBottom: 15,
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+  },
+  shotInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  shotInfoLabel: {
+    fontSize: 14,
+    color: '#555',
+  },
+  shotInfoValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  inputContainer: {
+    marginBottom: 15,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  pickerContainer: {
+    marginBottom: 15,
+  },
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    overflow: 'hidden',
+    backgroundColor: '#f9f9f9',
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+    color: '#333',
+    backgroundColor: '#f9f9f9',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: 10,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#f2f2f2',
+    marginRight: 10,
+  },
+  confirmButton: {
+    backgroundColor: '#007AFF',
+  },
+  cancelButtonText: {
+    color: '#555',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
   },
   debugContainer: {
     width: '100%',
