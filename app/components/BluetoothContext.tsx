@@ -14,6 +14,13 @@ interface BluetoothContextType {
     connectedScale: Device | null;
     pressureValue: number | null;
     scaleValue: number | null;
+    timerValue: number | null;
+    flowRate: number | null
+    scaleBatteryPercentage: number | null
+    sendStartTimerCommand: () => Promise<void>
+    sendStopTimerCommand: (callback?: () => void) => Promise<void>
+    sendResetTimerCommand: () => Promise<void>,
+    timerStatus: 'running' | 'stopped' | 'reset'
 }
 
 const BluetoothContext = createContext<BluetoothContextType | undefined>(undefined);
