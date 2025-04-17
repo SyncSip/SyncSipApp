@@ -4,8 +4,8 @@ import { BleManager, Device, Subscription } from 'react-native-ble-plx'
 import * as ExpoDevice from 'expo-device'
 import { Buffer } from 'buffer'
 import * as haptics from 'expo-haptics'
+import { bleDeviceNames, bleNameCharacteristicsMap, parseBookooThemisData } from "./scripts/ble.constants"
 
-// Service and characteristic UUIDs
 const PRESSURE_SERVICE_UUID = "0000181A-0000-1000-8000-00805F9B34FB"
 const PRESSURE_CHARACTERISTIC_UUID = "00002A6D-0000-1000-8000-00805F9B34FB"
 const SCALE_SERVICE_UUID = "9999181A-0000-1000-8000-00805F9B34FB"
@@ -23,12 +23,19 @@ interface bleAPI {
     connectedScale: Device | null
     pressureValue: number | null
     scaleValue: number | null
+    timerValue: number | null
+    scaleBatteryPercentage: number | null
+    flowRate: number | null
     connectionErrors: {
         pressure: string | null,
         scale: string | null
     }
     isConnecting: boolean
-    connectToBothDevices: (pressureSensor: Device, scale: Device) => Promise<void>
+    connectToBothDevices: (pressureSensor: Device, scale: Device) => Promise<void>,
+    sendStartTimerCommand: () => Promise<void>
+    sendStopTimerCommand: () => Promise<void>
+    sendResetTimerCommand: () => Promise<void>
+    timerStatus: 'running' | 'stopped' | 'reset'
 }
 
 function useBle(): bleAPI {
@@ -38,7 +45,10 @@ function useBle(): bleAPI {
     const [connectedScale, setConnectedScale] = useState<Device | null>(null)
     const [pressureValue, setPressureValue] = useState<number | null>(null)
     const [scaleValue, setScaleValue] = useState<number | null>(null)
+    const [timerValue, setTimerValue] = useState<number | null>(null)
     const [isConnecting, setIsConnecting] = useState(false)
+    const [flowRate, setFlowRate] = useState<number | null>(null)
+    const [scaleBatteryPercentage, setScaleBatteryPercentage] = useState<number | null>(null)
     const connectionLockRef = useRef(false)
     const [connectionErrors, setConnectionErrors] = useState<{
         pressure: string | null,
@@ -47,6 +57,9 @@ function useBle(): bleAPI {
         pressure: null,
         scale: null
     })
+    const [timerStatus, setTimerStatus] = useState<'running' | 'stopped' | 'reset'>("reset");
+    const timerStatusRef = useRef<'running' | 'stopped' | 'reset'>('reset');
+    const prevTimerValueRef = useRef<number | null>(null);
 
     useEffect(() => {
         return () => {
@@ -87,6 +100,7 @@ function useBle(): bleAPI {
             bluetoothFineLocationPermissions === "granted"
         )
     }
+
 
     const requestPermissions = async (): Promise<boolean> => {
         if (Platform.OS === "android") {
@@ -130,8 +144,7 @@ function useBle(): bleAPI {
                         name: device.name,
                         id: device.id,
                     });
-                    
-                    if (device.name === "PressureSensor" || device.name === "Scale") {
+                    if (device.name && bleDeviceNames.includes(device.name)) {
                         setAllDevices((prevState) => {
                             if (!isDuplicateDevice(prevState, device)) {
                                 return [...prevState, device];
@@ -156,12 +169,10 @@ function useBle(): bleAPI {
                 await bleManager.cancelDeviceConnection(connectedPressureSensor.id);
                 console.log("Disconnected from pressure sensor");
                 
-                // Clear state
                 setConnectedPressureSensor(null);
                 setPressureValue(null);
                 setConnectionErrors(prev => ({ ...prev, pressure: null }));
                 
-                // Add a delay after disconnection
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         } catch (error) {
@@ -255,7 +266,24 @@ function useBle(): bleAPI {
     }, [connectedPressureSensor, disconnectFromPressureSensor, bleManager]);
 
     const connectToScale = useCallback(async (device: Device) => {
-
+        let dataCharacteristicUuid;
+        let commandCharacteristicUuid;
+        let serviceUuid;
+    
+        if (device.name) {
+            console.log("DEVICE NAME: ", device.name);
+            if (bleNameCharacteristicsMap[device.name]) {
+                const deviceConfig = bleNameCharacteristicsMap[device.name];
+                console.log("DEVICE characteristic: ", deviceConfig);
+                serviceUuid = deviceConfig.serviceUuid;
+                dataCharacteristicUuid = deviceConfig.dataCharacteristicsUuid;
+                commandCharacteristicUuid = deviceConfig.commandCharacteristicsUuid;
+            } else {
+                console.log("Error: device name does not exist in devices map");
+                return;
+            }
+        }
+        
         if (isConnecting || connectionLockRef.current) {
             console.log("Connection already in progress, please wait");
             return;
@@ -275,9 +303,7 @@ function useBle(): bleAPI {
                 timeout: 15000,
             });
             console.log("Connected to scale");
-
             await new Promise(resolve => setTimeout(resolve, 1000));
-
             const discoveredDevice = await connectedDevice.discoverAllServicesAndCharacteristics();
             console.log("Discovered services and characteristics for scale");
 
@@ -286,25 +312,83 @@ function useBle(): bleAPI {
             
             setConnectedScale(discoveredDevice);
 
+            console.log("Setting up monitoring for weight data characteristic:", dataCharacteristicUuid);
             discoveredDevice.monitorCharacteristicForService(
-                SCALE_SERVICE_UUID,
-                SCALE_CHARACTERISTIC_UUID,
+                serviceUuid,
+                dataCharacteristicUuid,
                 (error, characteristic) => {
                     if (error) {
                         console.log("Scale monitoring error:", error);
                         return;
                     }
+                                        
                     if (characteristic?.value) {
                         const buffer = Buffer.from(characteristic.value, 'base64');
-                        const weight = buffer.readFloatLE(0);
-                        console.log("Received weight:", weight);
-                        setScaleValue(weight);
+                        
+                        try {
+                            const parsedData = parseBookooThemisData(buffer.toString('hex'));
+                            
+                            if (parsedData.weightValue !== undefined && parsedData.weightSymbol) {
+                                if(parsedData.weightSymbol === "+"){
+                                    setScaleValue(parsedData.weightValue);
+                                }else{
+                                    setScaleValue(-parsedData.weightValue)
+                                }
+                            }
+                            
+                            if (parsedData.milliseconds !== undefined) {
+                                const currentMillis = parsedData.milliseconds;
+                                setTimerValue(currentMillis);
+                                let newStatus = timerStatusRef.current;
+                                const prevMillis = prevTimerValueRef.current;
+                            
+                                if (prevMillis !== null) {
+                                    if (currentMillis === 0) {
+                                        newStatus = "reset";
+                                    } else if (currentMillis > prevMillis) {
+                                        newStatus = "running";
+                                    } else if (currentMillis === prevMillis && currentMillis > 0) {
+                                        newStatus = "stopped";
+                                    }
+                                } else {
+                                    if (currentMillis > 0) {
+                                        newStatus = "running";
+                                    } else {
+                                        newStatus = "reset";
+                                    }
+                                }
+                            
+                                if (newStatus !== timerStatusRef.current) {
+                                    console.log("Timer status changing from:", timerStatusRef.current, "to:", newStatus);
+                                    timerStatusRef.current = newStatus;
+                                    setTimerStatus(newStatus);
+                                }
+                            
+                                prevTimerValueRef.current = currentMillis;
+                            }
+                            
+                            if(parsedData.batteryPercentage !== undefined){
+                                setScaleBatteryPercentage(parsedData.batteryPercentage)
+                            }
+                            
+                            if(parsedData.flowRate !== undefined && parsedData.flowRateSymbol){
+                                if(parsedData.flowRateSymbol === "+"){
+                                    setFlowRate(parsedData.flowRate)
+                                }else{
+                                    setFlowRate(-parsedData.flowRate)
+                                }
+                            }
+                        } catch (parseError) {
+                            console.log("Error parsing weight data:", parseError);
+                        }
                     }
                 }
             );
+    
+            await new Promise(resolve => setTimeout(resolve, 500));
             
             console.log("Scale connection and monitoring set up successfully");
-            haptics.impactAsync(haptics.ImpactFeedbackStyle.Heavy)
+            haptics.impactAsync(haptics.ImpactFeedbackStyle.Heavy);
         } catch (error) {
             console.log("Scale connection error:", error);
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -318,6 +402,144 @@ function useBle(): bleAPI {
             }, 2000);
         }
     }, [connectedScale, disconnectFromScale, bleManager]);
+
+    const sendStartTimerCommand = useCallback(async (): Promise<void> => {
+        if (!connectedScale) {
+            console.log("Cannot send start timer command: No scale connected");
+            return;
+        }
+
+        try {
+            console.log("Sending start timer command to scale...");
+            
+            const deviceConfig = bleNameCharacteristicsMap[connectedScale.name || ""];
+            if (!deviceConfig) {
+                console.log("Error: Unknown device, cannot determine UUIDs");
+                return;
+            }
+            
+            const serviceUuid = deviceConfig.serviceUuid;
+            const commandCharacteristicUuid = deviceConfig.commandCharacteristicsUuid;
+            
+            const startTimerCommandBytes = [0x03, 0x0A, 0x04, 0x00, 0x00];
+            
+            let checksum = 0;
+            for (const byte of startTimerCommandBytes) {
+                checksum ^= byte;
+            }
+            
+            const fullCommand = Buffer.from([...startTimerCommandBytes, checksum]);
+            
+            console.log("Start timer command bytes:", 
+                        Array.from(fullCommand).map(b => b.toString(16).padStart(2, '0')).join(' '));
+            
+            await connectedScale.writeCharacteristicWithResponseForService(
+                serviceUuid,
+                commandCharacteristicUuid,
+                fullCommand.toString('base64')
+            );
+            
+            console.log("Start timer command sent successfully");
+            
+            haptics.impactAsync(haptics.ImpactFeedbackStyle.Medium);
+            
+        } catch (error) {
+            console.log("Error sending start timer command:", error);
+            throw error;
+        }
+    }, [connectedScale]);
+
+    const sendResetTimerCommand = useCallback(async (): Promise<void> => {
+        if (!connectedScale) {
+            console.log("Cannot send reset timer command: No scale connected");
+            return;
+        }
+
+        try {
+            console.log("Sending reset timer command to scale...");
+            
+            const deviceConfig = bleNameCharacteristicsMap[connectedScale.name || ""];
+            if (!deviceConfig) {
+                console.log("Error: Unknown device, cannot determine UUIDs");
+                return;
+            }
+            
+            const serviceUuid = deviceConfig.serviceUuid;
+            const commandCharacteristicUuid = deviceConfig.commandCharacteristicsUuid;
+            
+            const resetTimerCommandBytes = [0x03, 0x0A, 0x06, 0x00, 0x00];
+            
+            let checksum = 0;
+            for (const byte of resetTimerCommandBytes) {
+                checksum ^= byte;
+            }
+            
+            const fullCommand = Buffer.from([...resetTimerCommandBytes, checksum]);
+            
+            console.log("reset timer command bytes:", 
+                        Array.from(fullCommand).map(b => b.toString(16).padStart(2, '0')).join(' '));
+            
+            await connectedScale.writeCharacteristicWithResponseForService(
+                serviceUuid,
+                commandCharacteristicUuid,
+                fullCommand.toString('base64')
+            );
+            
+            console.log("reset timer command sent successfully");
+            
+        } catch (error) {
+            console.log("Error sending start timer command:", error);
+            throw error;
+        }
+    }, [connectedScale]);
+
+    const sendStopTimerCommand = useCallback(async (): Promise<void> => {
+        if (!connectedScale) {
+            console.log("Cannot send stop timer command: No scale connected");
+            return;
+        }
+
+        try {
+            console.log("Sending stop timer command to scale...");
+            
+            const deviceConfig = bleNameCharacteristicsMap[connectedScale.name || ""];
+            if (!deviceConfig) {
+                console.log("Error: Unknown device, cannot determine UUIDs");
+                return;
+            }
+            
+            const serviceUuid = deviceConfig.serviceUuid;
+            const commandCharacteristicUuid = deviceConfig.commandCharacteristicsUuid;
+            
+            const commandBytes = [0x03, 0x0A, 0x05, 0x00, 0x00];
+            
+            let checksum = 0;
+            for (const byte of commandBytes) {
+                checksum ^= byte;
+            }
+            
+            const fullCommand = Buffer.from([...commandBytes, checksum]);
+            
+            console.log("stop timer command bytes:", 
+                        Array.from(fullCommand).map(b => b.toString(16).padStart(2, '0')).join(' '));
+            
+            await connectedScale.writeCharacteristicWithResponseForService(
+                serviceUuid,
+                commandCharacteristicUuid,
+                fullCommand.toString('base64')
+            );
+            
+            console.log("stop timer command sent successfully");
+            
+            haptics.impactAsync(haptics.ImpactFeedbackStyle.Medium);
+            
+        } catch (error) {
+            console.log("Error sending start timer command:", error);
+            throw error;
+        }
+    }, [connectedScale]);
+
+    
 
     const connectToBothDevices = useCallback(async (pressureSensor: Device, scale: Device) => {
         try {
@@ -388,9 +610,17 @@ function useBle(): bleAPI {
         connectedScale,
         pressureValue,
         scaleValue,
+        timerValue,
         connectionErrors,
         isConnecting,
-        connectToBothDevices
+        connectToBothDevices,
+        scaleBatteryPercentage,
+        flowRate,
+        sendStartTimerCommand,
+        sendStopTimerCommand,
+        sendResetTimerCommand,
+        timerStatus,
+
     }
 }
 
