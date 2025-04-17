@@ -15,7 +15,10 @@ const SplitConnectScreen = () => {
     connectedPressureSensor,
     connectedScale,
     pressureValue,
-    scaleValue
+    scaleValue,
+    flowRate, 
+    scaleBatteryPercentage, 
+    timerValue
   } = useBluetooth();
 
   const [isPressureModalVisible, setPressureModalVisible] = useState(false);
@@ -107,6 +110,15 @@ const SplitConnectScreen = () => {
               <Text style={styles.valueText}>
                 {scaleValue !== null ? `${scaleValue.toFixed(2)} g` : 'Reading...'}
               </Text>
+              <Text style={styles.valueText}>
+                {timerValue !== null ? `${timerValue / 1000} s` : 'Reading...'}
+              </Text>
+              <Text style={styles.valueText}>
+                {flowRate !== null ? `${flowRate} g/s` : 'Reading...'}
+              </Text>
+              <Text style={styles.valueText}>
+                {scaleBatteryPercentage !== null ? `${scaleBatteryPercentage} %` : 'Reading...'}
+              </Text>
               <TouchableOpacity
                 style={styles.disconnectButton}
                 onPress={disconnectFromScale}
@@ -190,19 +202,16 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   disconnectButton: {
-    backgroundColor: '#FF3B30', // iOS red
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 8,
     alignItems: 'center',
     marginTop: 20,
     width: '80%',
     maxWidth: 220,
   },
   disconnectButtonText: {
-    color: 'white',
+    color: '#FF3B30',
     fontSize: 17,
-    fontWeight: '600',
   },
   connectedContainer: {
     alignItems: 'center',
@@ -215,7 +224,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   valueText: {
-    fontSize: 34,
+    fontSize: 24,
     fontWeight: '500',
     marginTop: 20,
     marginBottom: 10,
