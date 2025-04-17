@@ -26,6 +26,7 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
   const startTime = useRef<number>(0);
   const lastWeight = useRef<number>(0);
   const lastWeightTime = useRef<number>(0);
+  const [xDomain, setXDomain] = useState([0, 50]);
   
   const { pressureValue, scaleValue, flowRate } = useBluetooth();
   
@@ -35,8 +36,8 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
   const height = 300;
 
   const xScale = d3.scaleLinear()
-    .domain([0, 30])
-    .range([0, width]);
+  .domain(xDomain)
+  .range([0, width]);
 
   const pressureYScale = d3.scaleLinear()
     .domain([0, 12])
@@ -113,26 +114,23 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
   const addDataPoint = (time: number, pressure: number, weight: number, flowRate: number|null) => {
     setData(prevData => {
       const newData = [...prevData, { time, pressure, weight, flowRate }];
-      
-      const trimmedData = newData.length > 300 ? newData.slice(-300) : newData;
-      
-      const newPressurePathString = pressureLineGenerator(trimmedData) || '';
-      setPressurePathString(newPressurePathString);
-      
-      const newWeightPathString = weightLineGenerator(trimmedData) || '';
-      setWeightPathString(newWeightPathString);
-      
-      if (time > 25 && xScale.domain()[1] <= 30) {
-        xScale.domain([0, 60]);
-      } else if (time > 50 && xScale.domain()[1] <= 60) {
-        xScale.domain([0, 120]);
+
+      if (time > xDomain[1] - 5) {
+        const newMax = Math.ceil(time * 1.1);
+        setXDomain([0, newMax]);
       }
       
-      return trimmedData;
+      const newPressurePathString = pressureLineGenerator(newData) || '';
+      setPressurePathString(newPressurePathString);
+      
+      const newWeightPathString = weightLineGenerator(newData) || '';
+      setWeightPathString(newWeightPathString);
+      
+      return newData;
     });
   };
 
-  const xTicks = xScale.ticks(5);
+  const xTicks = xScale.ticks(10);
   const pressureYTicks = pressureYScale.ticks(6);
   const weightYTicks = weightYScale.ticks(5);
 
