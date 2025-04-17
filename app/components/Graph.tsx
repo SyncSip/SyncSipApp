@@ -8,14 +8,14 @@ interface DataPoint {
   time: number;
   pressure: number;
   weight: number;
-  flowRate: number;
+  flowRate: number|null;
 }
 
 const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
   const [data, setData] = useState<DataPoint[]>([]);
   const [currentPressure, setCurrentPressure] = useState(0);
   const [currentWeight, setCurrentWeight] = useState(0);
-  const [currentFlowRate, setCurrentFlowRate] = useState(0);
+  const [currentFlowRate, setCurrentFlowRate] = useState<number |null>(0);
   const [doseWeight, setDoseWeight] = useState('18');
   const [ratio, setRatio] = useState(0);
   const [pressurePathString, setPressurePathString] = useState('');
@@ -27,10 +27,10 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
   const lastWeight = useRef<number>(0);
   const lastWeightTime = useRef<number>(0);
   
-  const { pressureValue, scaleValue } = useBluetooth();
+  const { pressureValue, scaleValue, flowRate } = useBluetooth();
   
-  const SCREEN_WIDTH = Dimensions.get('window').width;
-  const margin = { top: 40, right: 60, bottom: 50, left: 50 };
+  const SCREEN_WIDTH = Dimensions.get('window').height;
+  const margin = { top: 10, right: 250, bottom: 10, left: 120 };
   const width = SCREEN_WIDTH - margin.left - margin.right;
   const height = 300;
 
@@ -56,25 +56,6 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
     .y(d => weightYScale(d.weight))
     .curve(d3.curveLinear);
 
-  const calculateFlowRate = (currentTime: number, currentWeight: number) => {
-    if (lastWeightTime.current === 0) {
-      lastWeightTime.current = currentTime;
-      lastWeight.current = currentWeight;
-      return 0;
-    }
-    
-    const timeDiff = currentTime - lastWeightTime.current;
-    if (timeDiff < 0.1) return currentFlowRate;
-    
-    const weightDiff = currentWeight - lastWeight.current;
-    const flowRate = weightDiff / timeDiff;
-    
-    lastWeightTime.current = currentTime;
-    lastWeight.current = currentWeight;
-    
-    return 0.7 * currentFlowRate + 0.3 * flowRate;
-  };
-
   const calculateRatio = (weight: number) => {
     if (weight <= 0) return 0;
     const dose = parseFloat(doseWeight);
@@ -94,9 +75,7 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
     if (isStarted && startTime.current > 0) {
       const currentTime = (Date.now() - startTime.current) / 1000;
       const weight = scaleValue !== null ? scaleValue : 0;
-      const flowRate = calculateFlowRate(currentTime, weight);
       setCurrentFlowRate(flowRate);
-      
       addDataPoint(
         currentTime, 
         pressureValue !== null ? pressureValue : 0,
@@ -131,7 +110,7 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
     };
   }, [isStarted]);
 
-  const addDataPoint = (time: number, pressure: number, weight: number, flowRate: number) => {
+  const addDataPoint = (time: number, pressure: number, weight: number, flowRate: number|null) => {
     setData(prevData => {
       const newData = [...prevData, { time, pressure, weight, flowRate }];
       
@@ -171,77 +150,8 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
 
   return (
     <View style={styles.container}>
-      {/* Dose Input and Ratio Display */}
-      <View style={styles.doseRatioContainer}>
-        <View style={styles.doseInputContainer}>
-          <RNText style={styles.label}>Dose:</RNText>
-          {isEditingDose ? (
-            <View style={styles.doseEditContainer}>
-              <TextInput
-                style={styles.doseInput}
-                keyboardType="numeric"
-                value={doseWeight}
-                onChangeText={handleDoseChange}
-                autoFocus
-                selectTextOnFocus
-              />
-              <TouchableOpacity 
-                style={styles.doseButton}
-                onPress={finishDoseEdit}
-              >
-                <RNText style={styles.doseButtonText}>✓</RNText>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity onPress={() => setIsEditingDose(true)}>
-              <RNText style={styles.doseValue}>{doseWeight}g</RNText>
-            </TouchableOpacity>
-          )}
-        </View>
-        
-        <View style={styles.ratioContainer}>
-          <RNText style={styles.label}>Ratio:</RNText>
-          <RNText style={styles.ratioValue}>
-            1:{ratio.toFixed(2)}
-          </RNText>
-        </View>
-      </View>
-      
-      {/* Flow Rate Display */}
-      <View style={styles.flowRateContainer}>
-        <RNText style={styles.label}>Flow Rate:</RNText>
-        <RNText style={styles.flowRateValue}>
-          {currentFlowRate.toFixed(2)} g/s
-        </RNText>
-      </View>
-      
-      {/* Current Values Display */}
-      <View style={styles.currentValueContainer}>
-        <View style={styles.valueItem}>
-          <RNText style={styles.currentValueLabel}>Pressure:</RNText>
-          <RNText style={[styles.currentValueText, {color: 'red'}]}>
-            {currentPressure.toFixed(2)} bar
-          </RNText>
-        </View>
-        <View style={styles.valueDivider} />
-        <View style={styles.valueItem}>
-          <RNText style={styles.currentValueLabel}>Weight:</RNText>
-          <RNText style={[styles.currentValueText, {color: 'blue'}]}>
-            {currentWeight.toFixed(2)} g
-          </RNText>
-        </View>
-      </View>
-      
-      {/* Debug info */}
-      <View style={styles.debugContainer}>
-        <RNText style={styles.debugText}>
-          Data points: {data.length} | 
-          Recording: {isStarted ? 'Yes' : 'No'}
-        </RNText>
-      </View>
-      
       {/* Graph */}
-      <View style={styles.graphContainer}>
+      <View>
         <Svg width={SCREEN_WIDTH} height={height + margin.top + margin.bottom}>
           <G transform={`translate(${margin.left},${margin.top})`}>
             {/* Background */}
@@ -358,18 +268,10 @@ const EspressoGraph = ({ isStarted }: { isStarted: boolean }) => {
 
 const styles = StyleSheet.create({
   container: {
+    transform: [{rotate: "90deg"}],
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 10,
-  },
-  graphContainer: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    overflow: 'hidden',
   },
   doseRatioContainer: {
     flexDirection: 'row',
