@@ -10,10 +10,13 @@ This monorepo consists of three main directories:
 ---
 
 ## Directory Structure
-.
+
 ├── app/       # React Native app
+
 ├── backend/   # Backend API server
+
 ├── docs/      # Documentation site
+
 
 
 ---
