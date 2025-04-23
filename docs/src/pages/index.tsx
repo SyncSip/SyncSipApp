@@ -1,0 +1,68 @@
+import clsx from 'clsx';
+import Link from '@docusaurus/Link';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import Layout from '@theme/Layout';
+import HomepageFeatures from '@site/src/components/HomepageFeatures';
+import Heading from '@theme/Heading';
+
+import styles from './index.module.css';
+import { JSX } from 'react';
+
+function HomepageHeader() {
+  const {siteConfig} = useDocusaurusContext();
+  return (
+    <header className={clsx('hero hero--primary', styles.heroBanner)}>
+      <div className="container">
+        <Heading as="h1" className="hero__title">
+          {siteConfig.title}
+        </Heading>
+        <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <div className={styles.buttons}>
+          <Link
+            className={clsx('button button--secondary button--lg', styles.button)}
+            to="/docs/intro">
+            Grinduino Documentation 
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+function HomepageFooter() {
+  const {siteConfig} = useDocusaurusContext();
+  return (
+    <header className={clsx('hero hero--primary', styles.heroBanner)}>
+      <div className="container">
+        <Heading as="h1" className="hero__title">
+          Join The Communinity!
+        </Heading>
+        <p className="hero__subtitle">Ask questions, Discuss ideas and share your success!</p>
+        <div className={styles.buttons}>
+        <Link
+            className={clsx('button button--secondary button--lg', styles.button)}
+            to="https://discord.gg/8UvV2dJnPF"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            SyncSip Discord Channel
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export default function Home(): JSX.Element {
+  const {siteConfig} = useDocusaurusContext();
+  return (
+    <Layout
+      title={`${siteConfig.title}`}
+      description="Description will go into a meta tag in <head />">
+      <HomepageHeader />
+      <main>
+        <HomepageFeatures />
+      </main>
+      <HomepageFooter/>
+    </Layout>
+  );
+}
