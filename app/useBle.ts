@@ -202,7 +202,7 @@ function useBle(): bleAPI {
         }
     }, [connectedScale, bleManager]);
 
-    const connectToPressureSensor = useCallback(async (device: Device) => {
+    const connectToPressureSensor = useCallback(async (device: Device, retryCount = 0) => {
         if (isConnecting || connectionLockRef.current) {
             console.log("Connection already in progress, please wait");
             return;
@@ -218,26 +218,34 @@ function useBle(): bleAPI {
             }
             
             console.log("Connecting to pressure sensor:", device.id);
+            
             const connectedDevice = await device.connect({
-                timeout: 15000,
+                timeout: 30000,  
+                autoConnect: true,
+                requestMTU: 512,  
             });
+            
             console.log("Connected to pressure sensor");
-
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
+    
+            // Longer delay after connection
+            await new Promise(resolve => setTimeout(resolve, 2000));
+    
             const discoveredDevice = await connectedDevice.discoverAllServicesAndCharacteristics();
             console.log("Discovered services and characteristics for pressure sensor");
-
-            await new Promise(resolve => setTimeout(resolve, 1000));
+    
+            // Another delay after discovery
+            await new Promise(resolve => setTimeout(resolve, 2000));
             
             setConnectedPressureSensor(discoveredDevice);
-
-            discoveredDevice.monitorCharacteristicForService(
+    
+            // Add error handling in the monitoring function
+            const subscription = discoveredDevice.monitorCharacteristicForService(
                 PRESSURE_SERVICE_UUID,
                 PRESSURE_CHARACTERISTIC_UUID,
                 (error, characteristic) => {
                     if (error) {
                         console.log("Pressure monitoring error:", error);
+                        // Don't disconnect on monitoring errors
                         return;
                     }
                     if (characteristic?.value) {
@@ -255,6 +263,15 @@ function useBle(): bleAPI {
             console.log("Pressure sensor connection error:", error);
             const errorMessage = error instanceof Error ? error.message : String(error);
             setConnectionErrors(prev => ({ ...prev, pressure: errorMessage }));
+            
+            if (retryCount < 3) {
+                console.log(`Retrying connection (attempt ${retryCount + 1}/3)...`);
+                setTimeout(() => {
+                    connectToPressureSensor(device, retryCount + 1);
+                }, 3000);
+                return;
+            }
+            
             setConnectedPressureSensor(null);
             setPressureValue(null);
         } finally {
@@ -264,6 +281,7 @@ function useBle(): bleAPI {
             }, 2000);
         }
     }, [connectedPressureSensor, disconnectFromPressureSensor, bleManager]);
+    
 
     const connectToScale = useCallback(async (device: Device) => {
         let dataCharacteristicUuid;
