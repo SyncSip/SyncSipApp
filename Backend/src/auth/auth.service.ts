@@ -8,10 +8,6 @@ import { CreateUserDto } from 'src/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 
-const mockUser = {
-  id: '87r3280934234',
-  name: 'snooducks',
-};
 @Injectable()
 export class AuthService {
   constructor(
