@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Modal,
@@ -6,8 +6,11 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
+  Dimensions,
+  SafeAreaView,
 } from 'react-native';
 import { ReadShotDto } from '@/api/generated';
+import ModalGraph from './ModalGraph';
 
 type ShotDetailsModalProps = {
   visible: boolean;
@@ -20,6 +23,17 @@ export default function ShotDetailsModal({
   onClose,
   shot,
 }: ShotDetailsModalProps) {
+  const [graphData, setGraphData] = useState<any[]>([]);
+  const windowWidth = Dimensions.get('window').width;
+
+  useEffect(() => {
+    if (shot?.graphData) {
+      setGraphData(shot.graphData);
+    } else {
+      setGraphData([]);
+    }
+  }, [shot]);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
@@ -31,13 +45,24 @@ export default function ShotDetailsModal({
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={styles.modalContainer}>
+      <SafeAreaView style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <ScrollView style={styles.scrollContent}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Shot Details</Text>
-              <Text style={styles.date}>{formatDate((shot?.createdAt) || "")}</Text>
-            </View>
+          <View style={styles.header}>
+            <Text style={styles.title}>{shot?.group || 'Shot Details'}</Text>
+            <Text style={styles.date}>{formatDate((shot?.createdAt) || "")}</Text>
+          </View>
+
+          <ScrollView 
+            style={styles.scrollContent}
+            contentContainerStyle={styles.scrollContentContainer}
+            showsVerticalScrollIndicator={true}
+          >
+            {graphData.length > 0 && (
+  <View style={styles.graphSection}>
+    <Text style={styles.sectionTitle}>Shot Graph</Text>
+    <ModalGraph data={graphData} shotId={shot?.id} />
+  </View>
+)}
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Basic Information</Text>
@@ -55,7 +80,7 @@ export default function ShotDetailsModal({
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Ratio:</Text>
-                <Text style={styles.value}>{((shot?.weight || 0 )/(shot?.dose ||0)).toFixed(2)}</Text>
+                <Text style={styles.value}>1:{((shot?.weight || 0)/(shot?.dose || 0)).toFixed(2)}</Text>
               </View>
             </View>
 
@@ -97,15 +122,13 @@ export default function ShotDetailsModal({
                 </Text>
               </View>
             )}
-
-
           </ScrollView>
 
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }
@@ -121,13 +144,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    maxHeight: '90%',
-  },
-  scrollContent: {
-    maxHeight: '80%',
+    height: '90%',
+    flexDirection: 'column',
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 15,
   },
   title: {
     fontSize: 24,
@@ -138,6 +159,57 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    paddingBottom: 20,
+  },
+  graphSection: {
+    marginBottom: 20,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 10,
+    padding: 15,
+  },
+  graphOuterContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+  },
+  graphWrapper: {
+    width: '100%',
+    height: 380,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+    padding: 10,
+    overflow: 'hidden',
+  },
+  graphRotationContainer: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [
+      { rotate: '-90deg' },
+      { translateX: -40 },
+    ],
+  },
+  graphScalingContainer: {
+    transform: [
+      { scale: 0.8 }, 
+      { translateX: 20 },
+    ],
+    width: 450, 
+    height: 320,
   },
   section: {
     marginBottom: 20,
@@ -171,7 +243,7 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 15,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 10,
   },
   closeButtonText: {
     color: '#007AFF',
