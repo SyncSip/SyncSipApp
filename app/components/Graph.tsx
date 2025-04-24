@@ -20,10 +20,12 @@ interface DataPoint {
 
 interface EspressoGraphProps {
   isStarted: boolean;
-  data?: DataPoint[]
+  data?: DataPoint[];
+  isHistorical?: boolean;
+  shotId?: string;
 }
 
-const EspressoGraph = ({ isStarted, data }: EspressoGraphProps) => {
+const EspressoGraph = ({ isStarted, data, isHistorical = false, shotId }: EspressoGraphProps) => {
   const [dataPoints, setData] = useState<DataPoint[]>(data ? data : []);
   const [currentPressure, setCurrentPressure] = useState(0);
   const [currentWeight, setCurrentWeight] = useState(0);
@@ -110,7 +112,47 @@ const EspressoGraph = ({ isStarted, data }: EspressoGraphProps) => {
     }
   };
 
+  const fetchShotDetails = async (id: string) => {
+    try {
+      const shotDetails = await shotsApi.get(id);
+      if (shotDetails && shotDetails.dose) {
+        setDoseWeight(shotDetails.dose.toString());
+        if (shotDetails.weight > 0) {
+          setRatio(calculateRatio(shotDetails.weight));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching shot details:', error);
+    }
+  };
+
   useEffect(() => {
+    if (isHistorical && data && data.length > 0) {
+      setData(data);
+      
+      const lastTimePoint = data[data.length - 1].time;
+      setXDomain([0, Math.ceil(lastTimePoint * 1.1)]);
+      
+      const newPressurePathString = pressureLineGenerator(data) || '';
+      setPressurePathString(newPressurePathString);
+      
+      const newWeightPathString = weightLineGenerator(data) || '';
+      setWeightPathString(newWeightPathString);
+      
+      const lastPoint = data[data.length - 1];
+      setCurrentPressure(lastPoint.pressure);
+      setCurrentWeight(lastPoint.weight);
+      setCurrentFlowRate(lastPoint.flowRate);
+      
+      if (shotId) {
+        fetchShotDetails(shotId);
+      }
+    }
+  }, [isHistorical, data, shotId]);
+
+  useEffect(() => {
+    if (isHistorical) return;
+    
     if (pressureValue !== null) {
       setCurrentPressure(pressureValue);
     }
@@ -131,9 +173,11 @@ const EspressoGraph = ({ isStarted, data }: EspressoGraphProps) => {
         flowRate
       );
     }
-  }, [pressureValue, scaleValue, isStarted]);
+  }, [pressureValue, scaleValue, isStarted, isHistorical]);
 
   useEffect(() => {
+    if (isHistorical) return;
+    
     if (isStarted) {
       setData([]);
       setPressurePathString('');
@@ -142,6 +186,7 @@ const EspressoGraph = ({ isStarted, data }: EspressoGraphProps) => {
       lastWeight.current = 0;
       lastWeightTime.current = 0;
       setCurrentFlowRate(0);
+      setXDomain([0, 50])
       
       addDataPoint(0, pressureValue || 0, scaleValue || 0, 0);
       
@@ -162,7 +207,7 @@ const EspressoGraph = ({ isStarted, data }: EspressoGraphProps) => {
         animationFrameId.current = null;
       }
     };
-  }, [isStarted]);
+  }, [isStarted, isHistorical]);
 
   const addDataPoint = (time: number, pressure: number, weight: number, flowRate: number|null) => {
     setData(prevData => {
@@ -375,174 +420,178 @@ const EspressoGraph = ({ isStarted, data }: EspressoGraphProps) => {
         </Svg>
       </View>
       
-      {/* Status indicator */}
-      <View style={styles.statusContainer}>
-        <View style={[styles.statusIndicator, { backgroundColor: isStarted ? 'green' : 'red' }]} />
-        <RNText style={styles.statusText}>
-          {isStarted ? 'Recording' : 'Stopped'}
-        </RNText>
-        
-        {!isStarted && dataPoints.length > 0 && (
-          <TouchableOpacity 
-            style={styles.saveButton}
-            onPress={() => {
-              setIsSaveModalVisible(true);
-              fetchEquipmentData();
-            }}
-          >
-            <RNText style={styles.saveButtonText}>Save Shot</RNText>
-          </TouchableOpacity>
-        )}
-      </View>
-      
-      {/* Save Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isSaveModalVisible}
-        onRequestClose={handleDismissSave}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <ScrollView contentContainerStyle={styles.modalScrollContent}>
-              <RNText style={styles.modalTitle}>Save Espresso Shot</RNText>
-              
-              <View style={styles.shotInfoContainer}>
-                <View style={styles.shotInfoRow}>
-                  <RNText style={styles.shotInfoLabel}>Dose:</RNText>
-                  <RNText style={styles.shotInfoValue}>{doseWeight}g</RNText>
-                </View>
-                
-                <View style={styles.shotInfoRow}>
-                  <RNText style={styles.shotInfoLabel}>Yield:</RNText>
-                  <RNText style={styles.shotInfoValue}>
-                    {dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].weight.toFixed(1) : '0'}g
-                  </RNText>
-                </View>
-                
-                <View style={styles.shotInfoRow}>
-                  <RNText style={styles.shotInfoLabel}>Time:</RNText>
-                  <RNText style={styles.shotInfoValue}>
-                    {dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].time.toFixed(1) : '0'}s
-                  </RNText>
-                </View>
-                
-                <View style={styles.shotInfoRow}>
-                  <RNText style={styles.shotInfoLabel}>Ratio:</RNText>
-                  <RNText style={styles.shotInfoValue}>
-                    1:{dataPoints.length > 0 ? (dataPoints[dataPoints.length - 1].weight / parseFloat(doseWeight)).toFixed(1) : '0'}
-                  </RNText>
-                </View>
-                
-                <View style={styles.shotInfoRow}>
-                  <RNText style={styles.shotInfoLabel}>Peak Pressure:</RNText>
-                  <RNText style={styles.shotInfoValue}>
-                    {dataPoints.length > 0 ? Math.max(...dataPoints.map(dp => dp.pressure)).toFixed(1) : '0'} bar
-                  </RNText>
-                </View>
-              </View>
-              
-              <View style={styles.inputContainer}>
-                <RNText style={styles.inputLabel}>Shot Name (optional):</RNText>
-                <TextInput
-                  style={styles.input}
-                  value={shotName}
-                  onChangeText={setShotName}
-                  placeholder="Morning espresso, Test shot, etc."
-                />
-              </View>
-              
-              {/* Equipment Selection */}
-              {isLoadingEquipment ? (
-                <View style={styles.loadingContainer}>
-                  <RNText>Loading equipment data...</RNText>
-                </View>
-              ) : (
-                <>
-                  {/* Machine Selection */}
-                  <View style={styles.pickerContainer}>
-                    <RNText style={styles.inputLabel}>Machine:</RNText>
-                    <View style={styles.pickerWrapper}>
-                      <Picker
-                        selectedValue={selectedMachineId}
-                        onValueChange={(value) => setSelectedMachineId(value)}
-                        style={styles.picker}
-                      >
-                        <Picker.Item label="Select a machine" value={null} />
-                        {machines.map((machine) => (
-                          <Picker.Item
-                            key={`machine-${machine.id}`}
-                            label={`${machine.brandName} ${machine.model}`}
-                            value={machine.id}
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-                  
-                  {/* Grinder Selection */}
-                  <View style={styles.pickerContainer}>
-                    <RNText style={styles.inputLabel}>Grinder:</RNText>
-                    <View style={styles.pickerWrapper}>
-                      <Picker
-                        selectedValue={selectedGrinderId}
-                        onValueChange={(value) => setSelectedGrinderId(value)}
-                        style={styles.picker}
-                      >
-                        <Picker.Item label="Select a grinder" value={null} />
-                        {grinders.map((grinder) => (
-                          <Picker.Item
-                            key={`grinder-${grinder.id}`}
-                            label={`${grinder.brandName} ${grinder.model}`}
-                            value={grinder.id}
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-                  
-                  {/* Bean Selection */}
-                  <View style={styles.pickerContainer}>
-                    <RNText style={styles.inputLabel}>Beans:</RNText>
-                    <View style={styles.pickerWrapper}>
-                      <Picker
-                        selectedValue={selectedBeanId}
-                        onValueChange={(value) => setSelectedBeanId(value)}
-                        style={styles.picker}
-                      >
-                        <Picker.Item label="Select beans" value={null} />
-                        {beans.map((bean) => (
-                          <Picker.Item
-                            key={`bean-${bean.id}`}
-                            label={`${bean.roastery} - ${bean.bean}`}
-                            value={bean.id}
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-                </>
-              )}
-              
-              <View style={styles.modalButtons}>
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={handleDismissSave}
-                >
-                  <RNText style={styles.cancelButtonText}>Cancel</RNText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.confirmButton]}
-                  onPress={saveShot}
-                >
-                  <RNText style={styles.confirmButtonText}>Save Shot</RNText>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </View>
+      {!isHistorical && (
+        <View style={styles.statusContainer}>
+          <View style={[styles.statusIndicator, { backgroundColor: isStarted ? 'green' : 'red' }]} />
+          <RNText style={styles.statusText}>
+            {isStarted ? 'Recording' : 'Stopped'}
+          </RNText>
+          
+          {!isStarted && dataPoints.length > 0 && (
+            <TouchableOpacity 
+              style={styles.saveButton}
+              onPress={() => {
+                setIsSaveModalVisible(true);
+                fetchEquipmentData();
+              }}
+            >
+              <RNText style={styles.saveButtonText}>Save Shot</RNText>
+            </TouchableOpacity>
+          )}
         </View>
-      </Modal>
+      )}
+      
+      {isHistorical && (
+        <View style={styles.historicalLabel}>
+          <RNText style={styles.historicalText}>Saved Shot</RNText>
+        </View>
+      )}
+      
+      {!isHistorical && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isSaveModalVisible}
+          onRequestClose={handleDismissSave}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <ScrollView contentContainerStyle={styles.modalScrollContent}>
+                <RNText style={styles.modalTitle}>Save Espresso Shot</RNText>
+                
+                <View style={styles.shotInfoContainer}>
+                  <View style={styles.shotInfoRow}>
+                    <RNText style={styles.shotInfoLabel}>Dose:</RNText>
+                    <RNText style={styles.shotInfoValue}>{doseWeight}g</RNText>
+                  </View>
+                  
+                  <View style={styles.shotInfoRow}>
+                    <RNText style={styles.shotInfoLabel}>Yield:</RNText>
+                    <RNText style={styles.shotInfoValue}>
+                      {dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].weight.toFixed(1) : '0'}g
+                    </RNText>
+                  </View>
+                  
+                  <View style={styles.shotInfoRow}>
+                    <RNText style={styles.shotInfoLabel}>Time:</RNText>
+                    <RNText style={styles.shotInfoValue}>
+                      {dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].time.toFixed(1) : '0'}s
+                    </RNText>
+                  </View>
+                  
+                  <View style={styles.shotInfoRow}>
+                    <RNText style={styles.shotInfoLabel}>Ratio:</RNText>
+                    <RNText style={styles.shotInfoValue}>
+                      1:{dataPoints.length > 0 ? (dataPoints[dataPoints.length - 1].weight / parseFloat(doseWeight)).toFixed(1) : '0'}
+                    </RNText>
+                  </View>
+                  
+                  <View style={styles.shotInfoRow}>
+                    <RNText style={styles.shotInfoLabel}>Peak Pressure:</RNText>
+                    <RNText style={styles.shotInfoValue}>
+                      {dataPoints.length > 0 ? Math.max(...dataPoints.map(dp => dp.pressure)).toFixed(1) : '0'} bar
+                    </RNText>
+                  </View>
+                </View>
+                
+                <View style={styles.inputContainer}>
+                  <RNText style={styles.inputLabel}>Shot Name (optional):</RNText>
+                  <TextInput
+                    style={styles.input}
+                    value={shotName}
+                    onChangeText={setShotName}
+                    placeholder="Morning espresso, Test shot, etc."
+                  />
+                </View>
+                
+                {isLoadingEquipment ? (
+                  <View style={styles.loadingContainer}>
+                    <RNText>Loading equipment data...</RNText>
+                  </View>
+                ) : (
+                  <>
+                    <View style={styles.pickerContainer}>
+                      <RNText style={styles.inputLabel}>Machine:</RNText>
+                      <View style={styles.pickerWrapper}>
+                        <Picker
+                          selectedValue={selectedMachineId}
+                          onValueChange={(value) => setSelectedMachineId(value)}
+                          style={styles.picker}
+                        >
+                          <Picker.Item label="Select a machine" value={null} />
+                          {machines.map((machine) => (
+                            <Picker.Item
+                              key={`machine-${machine.id}`}
+                              label={`${machine.brandName} ${machine.model}`}
+                              value={machine.id}
+                            />
+                          ))}
+                        </Picker>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.pickerContainer}>
+                      <RNText style={styles.inputLabel}>Grinder:</RNText>
+                      <View style={styles.pickerWrapper}>
+                        <Picker
+                          selectedValue={selectedGrinderId}
+                          onValueChange={(value) => setSelectedGrinderId(value)}
+                          style={styles.picker}
+                        >
+                          <Picker.Item label="Select a grinder" value={null} />
+                          {grinders.map((grinder) => (
+                            <Picker.Item
+                              key={`grinder-${grinder.id}`}
+                              label={`${grinder.brandName} ${grinder.model}`}
+                              value={grinder.id}
+                            />
+                          ))}
+                        </Picker>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.pickerContainer}>
+                      <RNText style={styles.inputLabel}>Beans:</RNText>
+                      <View style={styles.pickerWrapper}>
+                        <Picker
+                          selectedValue={selectedBeanId}
+                          onValueChange={(value) => setSelectedBeanId(value)}
+                          style={styles.picker}
+                        >
+                          <Picker.Item label="Select beans" value={null} />
+                          {beans.map((bean) => (
+                            <Picker.Item
+                              key={`bean-${bean.id}`}
+                              label={`${bean.roastery} - ${bean.bean}`}
+                              value={bean.id}
+                            />
+                          ))}
+                        </Picker>
+                      </View>
+                    </View>
+                  </>
+                )}
+                
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.cancelButton]}
+                    onPress={handleDismissSave}
+                  >
+                    <RNText style={styles.cancelButtonText}>Cancel</RNText>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.confirmButton]}
+                    onPress={saveShot}
+                  >
+                    <RNText style={styles.confirmButtonText}>Save Shot</RNText>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -798,7 +847,22 @@ const styles = StyleSheet.create({
   debugText: {
     fontSize: 10,
     color: '#666',
-  }
+  },
+  historicalLabel: {
+    marginTop: 10,
+    backgroundColor: '#e6f7ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 5,
+    alignSelf: 'center',
+  },
+  historicalText: {
+    color: '#0066cc',
+    fontSize: 14,
+    fontWeight: '500',
+  },
 });
 
-export default EspressoGraph
+export default EspressoGraph;
+
+
