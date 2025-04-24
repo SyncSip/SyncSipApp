@@ -12,10 +12,6 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { RefreshDto } from 'src/dto/user-response.dto';
 
-const mockUser = {
-  id: '87r3280934234',
-  name: 'snooducks',
-};
 @Injectable()
 export class UsersService {
   constructor(
@@ -31,13 +27,6 @@ export class UsersService {
 
   async findByMail(email: string) {
     return await this.userRepository.findOneBy({ email: email });
-  }
-  async edit(editUserDto: EditUserDto) {
-    return mockUser;
-  }
-
-  async delete(deleteUserDto: DeleteUserDto) {
-    return mockUser;
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
