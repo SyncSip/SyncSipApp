@@ -29,4 +29,4 @@ The building process can easily be done in a day and all you need is very basic 
 ## Two paths
 
 There are essentially two ways you can use these docs, one way is to simply replicate the project and the other way is to truly understand the project and potentially make changes by yourself if you see room for improvement.
-I have called these different parts the **User-Docs** and **Contributor-Docs**.
+I have called these different parts the **User-Docs** and **Contributor-Docs** lol.
