@@ -98,14 +98,14 @@ export default function Graph() {
           <View style={styles.tile}>
             <Text style={styles.tileTitle}>Yield</Text>
             <Text style={styles.tileValue}>
-              {scaleValue ? scaleValue.toFixed(1) : "0.0"}g
+              {scaleValue ? scaleValue.toFixed(2) : "0.0"}g
             </Text>
           </View>
           
           <View style={styles.tile}>
             <Text style={styles.tileTitle}>Time</Text>
             <Text style={styles.tileValue}>
-              {timerValue ? timerValue.toFixed(0) : "0"}s
+              {timerValue ? (timerValue/1000).toFixed(1) : "0"}s
             </Text>
           </View>
           
@@ -159,8 +159,8 @@ const styles = StyleSheet.create({
   tilesContainer: {
     transform: [{rotate: "90deg"}],
     position: 'absolute',
-    bottom: 30,
-
+    bottom: 20,
+    left: 180,
     flexDirection: 'column',
     alignItems: 'center',
     zIndex: 5,
