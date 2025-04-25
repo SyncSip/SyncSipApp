@@ -316,3 +316,51 @@ export function parseEurekaPrecisaScaleData(hexString: string) {
 }
 
 
+export function parseFelicitaScaleData(hexString: string) {
+    try {
+        const cleanHex = hexString.replace(/\s/g, '');
+        
+        const bytes: string[] = [];
+        for (let i = 0; i < cleanHex.length; i += 2) {
+            bytes.push(cleanHex.substring(i, i + 2));
+        }
+    
+        const byteValues = bytes.map(byte => parseInt(byte, 16));
+        
+        if (byteValues.length !== 18) {
+            console.log("Invalid data length, expected 18 bytes, received:", byteValues.length);
+            return {};
+        }
+        
+        const weightBytes = byteValues.slice(3, 9).map(value => value - 48);
+        const weightRaw = parseInt(weightBytes.join(''));
+        const weightValue = parseFloat((weightRaw / 100).toFixed(2));
+        
+        const unitBytes = byteValues.slice(9, 11);
+        const unit = String.fromCharCode(...unitBytes);
+        
+        const MIN_BATTERY_LEVEL = 170; 
+        const MAX_BATTERY_LEVEL = 180; 
+        
+        const batteryRaw = byteValues[15];
+        const batteryPercentage = Math.round(
+            ((batteryRaw - MIN_BATTERY_LEVEL) / (MAX_BATTERY_LEVEL - MIN_BATTERY_LEVEL)) * 100
+        );
+        
+        const isChecksumValid = true;
+        
+        return {
+            weightValue,
+            unit,
+            batteryPercentage,
+            isChecksumValid,
+            weightRaw,
+            batteryRaw
+        };
+    } catch (error) {
+        console.log("Error in parseFelicitaScaleData:", error);
+        return {};
+    }
+}
+
+
