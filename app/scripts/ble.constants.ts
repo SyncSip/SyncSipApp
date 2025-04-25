@@ -110,3 +110,49 @@ export function parseBookooThemisData(hexString: string) {
         return {};
     }
 }
+
+export function parseTimemoreScaleData(hexString: string) {
+    try {
+        const cleanHex = hexString.replace(/\s/g, '');
+        
+        const bytes: string[] = [];
+        for (let i = 0; i < cleanHex.length; i += 2) {
+            bytes.push(cleanHex.substring(i, i + 2));
+        }
+    
+        const byteValues = bytes.map(byte => parseInt(byte, 16));
+        
+        if (byteValues.length < 8) {
+            console.log("Not enough bytes in data, received:", byteValues.length);
+            return {};
+        }
+        
+        const statusByte = byteValues[0];
+        
+        const weightRaw = (byteValues[1] << 16) | (byteValues[2] << 8) | byteValues[3];
+        const weightValue = parseFloat((weightRaw / 10).toFixed(1));
+        
+        const secondWeightRaw = (byteValues[5] << 16) | (byteValues[6] << 8) | byteValues[7];
+        const secondWeightValue = parseFloat((secondWeightRaw / 10).toFixed(1));
+        
+        let batteryPercentage = null;
+        if (byteValues.length > 8) {
+            batteryPercentage = byteValues[8];
+        }
+        
+        const isChecksumValid = true;
+        
+        return {
+            statusByte,
+            weightValue,
+            secondWeightValue,
+            batteryPercentage,
+            isChecksumValid,
+            weightRaw,
+            secondWeightRaw
+        };
+    } catch (error) {
+        console.log("Error in parseTimemoreScaleData:", error);
+        return {};
+    }
+}
