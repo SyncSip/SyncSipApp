@@ -197,3 +197,66 @@ export function parseBlackcoffeeScaleData(hexString: string) {
     }
 }
 
+export function parseDecentScaleData(hexString: string) {
+    try {
+        const cleanHex = hexString.replace(/\s/g, '');
+        
+        const bytes: string[] = [];
+        for (let i = 0; i < cleanHex.length; i += 2) {
+            bytes.push(cleanHex.substring(i, i + 2));
+        }
+    
+        const byteValues = bytes.map(byte => parseInt(byte, 16));
+        
+        const apiVersion = byteValues.length === 10 ? '>1.3' : '<1.3';
+        
+        if (byteValues.length < 7) {
+            console.log("Not enough bytes in data, received:", byteValues.length);
+            return { apiVersion };
+        }
+        
+        const header = byteValues[0];
+        const commandByte = byteValues[1];
+        
+        let weightValue = null;
+        let weightIsStable = false;
+        let buttonEvent = null;
+        
+
+        if (commandByte === 0xce || commandByte === 0xca) {
+            const weightRaw = (byteValues[2] << 8) | byteValues[3];
+            weightValue = parseFloat((weightRaw / 10.0).toFixed(1));
+            weightIsStable = commandByte === 0xce;
+        } else if (commandByte === 0xaa && byteValues[2] === 0x01) {
+            buttonEvent = 'tare';
+        } else if (commandByte === 0xaa && byteValues[2] === 0x02) {
+            buttonEvent = 'timer';
+        }
+        
+        const receivedChecksum = byteValues[byteValues.length - 1];
+        let calculatedChecksum = 0;
+        
+        if (byteValues.length >= 6) {
+            calculatedChecksum = byteValues[0] ^ byteValues[1] ^ byteValues[2] ^ 
+                                byteValues[3] ^ byteValues[4] ^ byteValues[5];
+        }
+        
+        const isChecksumValid = calculatedChecksum === receivedChecksum;
+        
+        return {
+            apiVersion,
+            header,
+            commandByte,
+            weightValue,
+            weightIsStable,
+            buttonEvent,
+            isChecksumValid,
+            rawData: byteValues
+        };
+    } catch (error) {
+        console.log("Error in parseDecentScaleData:", error);
+        return {};
+    }
+}
+
+
