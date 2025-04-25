@@ -227,25 +227,21 @@ function useBle(): bleAPI {
             
             console.log("Connected to pressure sensor");
     
-            // Longer delay after connection
             await new Promise(resolve => setTimeout(resolve, 2000));
     
             const discoveredDevice = await connectedDevice.discoverAllServicesAndCharacteristics();
             console.log("Discovered services and characteristics for pressure sensor");
     
-            // Another delay after discovery
             await new Promise(resolve => setTimeout(resolve, 2000));
             
             setConnectedPressureSensor(discoveredDevice);
     
-            // Add error handling in the monitoring function
             const subscription = discoveredDevice.monitorCharacteristicForService(
                 PRESSURE_SERVICE_UUID,
                 PRESSURE_CHARACTERISTIC_UUID,
                 (error, characteristic) => {
                     if (error) {
                         console.log("Pressure monitoring error:", error);
-                        // Don't disconnect on monitoring errors
                         return;
                     }
                     if (characteristic?.value) {
