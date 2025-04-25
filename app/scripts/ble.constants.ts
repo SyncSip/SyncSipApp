@@ -156,3 +156,44 @@ export function parseTimemoreScaleData(hexString: string) {
         return {};
     }
 }
+
+export function parseBlackcoffeeScaleData(hexString: string) {
+    try {
+        const cleanHex = hexString.replace(/\s/g, '');
+        
+        const bytes: string[] = [];
+        for (let i = 0; i < cleanHex.length; i += 2) {
+            bytes.push(cleanHex.substring(i, i + 2));
+        }
+    
+        const byteValues = bytes.map(byte => parseInt(byte, 16));
+        
+        if (byteValues.length < 14) {
+            console.log("Not enough bytes in data, received:", byteValues.length);
+            return {};
+        }
+        
+        const isNegative = bytes[4] === '8' || bytes[4] === 'c';
+        const isStill = bytes[5] === '1';
+        
+        const hexWeight = cleanHex.slice(7, 14);
+        const weightValue = ((isNegative ? -1 : 1) * parseInt(hexWeight, 16)) / 1000;
+        
+        const statusByte = byteValues[0];
+        
+        const isChecksumValid = true;
+        
+        return {
+            statusByte,
+            weightValue,
+            isNegative,
+            isStill,
+            hexWeight,
+            isChecksumValid
+        };
+    } catch (error) {
+        console.log("Error in parseBlackcoffeeScaleData:", error);
+        return {};
+    }
+}
+
