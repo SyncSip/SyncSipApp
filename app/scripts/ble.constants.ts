@@ -363,4 +363,131 @@ export function parseFelicitaScaleData(hexString: string) {
     }
 }
 
+export function parseAcaiaScaleData(hexString: string) {
+    try {
+        const cleanHex = hexString.replace(/\s/g, '');
+        
+        const bytes: string[] = [];
+        for (let i = 0; i < cleanHex.length; i += 2) {
+            bytes.push(cleanHex.substring(i, i + 2));
+        }
+    
+        const byteValues = bytes.map(byte => parseInt(byte, 16));
+        
+        const MAGIC1 = 0xef;
+        const MAGIC2 = 0xdd;
+        
+        let messageStart = -1;
+        for (let i = 0; i < byteValues.length - 1; i++) {
+            if (byteValues[i] === MAGIC1 && byteValues[i + 1] === MAGIC2) {
+                messageStart = i;
+                break;
+            }
+        }
+        
+        if (messageStart < 0 || byteValues.length - messageStart < 6) {
+            console.log("Invalid Acaia data format or incomplete message");
+            return {};
+        }
+        
+        const messageType = byteValues[messageStart + 2];
+        
+        let result: any = {
+            messageType
+        };
+        
+        if (messageType === 12) {
+            const msgType = byteValues[messageStart + 4];
+            
+            if (msgType === 5) {
+                result.msgType = 'WEIGHT';
+                result.weightValue = decodeWeight(byteValues.slice(messageStart + 5));
+            } else if (msgType === 8) {
+                result.msgType = 'BUTTON_EVENT';
+                
+                const buttonType = byteValues[messageStart + 5];
+                const buttonSubType = byteValues[messageStart + 6];
+                
+                if (buttonType === 0 && buttonSubType === 5) {
+                    result.buttonEvent = 'TARE';
+                    result.weightValue = decodeWeight(byteValues.slice(messageStart + 7));
+                } else if (buttonType === 8 && buttonSubType === 5) {
+                    result.buttonEvent = 'START';
+                    result.weightValue = decodeWeight(byteValues.slice(messageStart + 7));
+                } else if (buttonType === 10 && buttonSubType === 7) {
+                    result.buttonEvent = 'STOP';
+                    result.time = decodeTime(byteValues.slice(messageStart + 7));
+                    result.weightValue = decodeWeight(byteValues.slice(messageStart + 11));
+                } else if (buttonType === 9 && buttonSubType === 7) {
+                    result.buttonEvent = 'RESET';
+                    result.time = decodeTime(byteValues.slice(messageStart + 7));
+                    result.weightValue = decodeWeight(byteValues.slice(messageStart + 11));
+                } else {
+                    result.buttonEvent = 'UNKNOWN';
+                }
+            } else if (msgType === 7) {
+                result.msgType = 'TIMER';
+                result.time = decodeTime(byteValues.slice(messageStart + 5));
+            } else if (msgType === 11) {
+                result.msgType = 'HEARTBEAT';
+                
+                if (byteValues[messageStart + 7] === 5) {
+                    result.weightValue = decodeWeight(byteValues.slice(messageStart + 8));
+                } else if (byteValues[messageStart + 7] === 7) {
+                    result.time = decodeTime(byteValues.slice(messageStart + 8));
+                }
+            }
+        } else if (messageType === 8) {
+            result.msgType = 'SETTINGS';
+            
+            const payload = byteValues.slice(messageStart + 3);
+            result.battery = payload[1] & 127;
+            
+            if (payload[2] === 2) {
+                result.units = 'grams';
+            } else if (payload[2] === 5) {
+                result.units = 'ounces';
+            }
+            
+            result.autoOff = !!(payload[4] * 5);
+            result.beepOn = payload[6] === 1;
+        }
+        
+        return result;
+    } catch (error) {
+        console.log("Error in parseAcaiaScaleData:", error);
+        return {};
+    }
+}
+
+function decodeWeight(weightPayload: number[]): number {
+    let value = ((weightPayload[1] & 0xff) << 8) + (weightPayload[0] & 255);
+    const unit = weightPayload[4] & 0xff;
+    
+    if (unit === 1) {
+        value /= 10.0;
+    } else if (unit === 2) {
+        value /= 100.0;
+    } else if (unit === 3) {
+        value /= 1000.0;
+    } else if (unit === 4) {
+        value /= 10000.0;
+    }
+    
+    if ((weightPayload[5] & 2) === 2) {
+        value *= -1;
+    }
+    
+    return parseFloat(value.toFixed(3));
+}
+
+
+function decodeTime(timePayload: number[]): number {
+    let value = (timePayload[0] & 0xff) * 60;
+    value = value + timePayload[1];
+    value = value + timePayload[2] / 10.0;
+    return Math.round(value * 1000); 
+}
+
+
 
