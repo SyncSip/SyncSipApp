@@ -260,3 +260,59 @@ export function parseDecentScaleData(hexString: string) {
 }
 
 
+export function parseEurekaPrecisaScaleData(hexString: string) {
+    try {
+        const cleanHex = hexString.replace(/\s/g, '');
+        
+        const bytes: string[] = [];
+        for (let i = 0; i < cleanHex.length; i += 2) {
+            bytes.push(cleanHex.substring(i, i + 2));
+        }
+    
+        const byteValues = bytes.map(byte => parseInt(byte, 16));
+        
+        if (byteValues.length < 9) {
+            console.log("Not enough bytes in data, received:", byteValues.length);
+            return {};
+        }
+        
+        const isNegative = byteValues[6] !== 0;
+        
+        const weightRaw = (byteValues[8] << 8) + byteValues[7];
+
+        const signedWeightRaw = isNegative ? weightRaw * -1 : weightRaw;
+        const weightValue = parseFloat((signedWeightRaw / 10).toFixed(1));
+        
+        let unit = 'g'; 
+        if (byteValues.length > 9) {
+            const unitByte = byteValues[9];
+            if (unitByte === 0x01) {
+                unit = 'oz';
+            } else if (unitByte === 0x02) {
+                unit = 'ml';
+            }
+        }
+        
+        let batteryPercentage = null;
+        if (byteValues.length > 10) {
+            batteryPercentage = byteValues[10];
+        }
+        
+        const isChecksumValid = true;
+        
+        return {
+            weightValue,
+            isNegative,
+            unit,
+            batteryPercentage,
+            isChecksumValid,
+            weightRaw,
+            signedWeightRaw
+        };
+    } catch (error) {
+        console.log("Error in parseEurekaPrecisaScaleData:", error);
+        return {};
+    }
+}
+
+
