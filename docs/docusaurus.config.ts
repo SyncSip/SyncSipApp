@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'SyncSip',
-  tagline: 'Make your espresso data driven',
+  tagline: 'Data Driven Espresso',
   favicon: 'img/Coffee-Brew-Icon.svg',
 
   // Set the production url of your site here
@@ -62,12 +62,12 @@ const config: Config = {
           label: 'Tutorial',
         },
         {
-          href: 'https://github.com/SyncSip/SyncSip.git',
+          href: 'https://github.com/SyncSip',
           label: 'GitHub',
           position: 'right',
         },
         {
-          href: 'https://github.com/lnart/grinduino',
+          href: 'https://github.com/synsip',
           label: 'Discord',
           position: 'right',
         },
