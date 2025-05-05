@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Tutorial Intro
 
-Let's discover **SyncSip**.
+Let's discover **SyncSip** and learn how to use this documentation website.
 
 ## What is it 
 
@@ -20,13 +20,22 @@ If you equip your espresso machine with the pressure sensor you can start using 
 
 ## What is the building process like ? 
 
-The only think that you really have to build is the pressure sensor, it requires soldering and optionally 3d printing. The 3D printied structures are so simple that if you don't have access to a printer you can consider building the case in an alternative way.
+The only thing that you really have to yourself is the pressure sensor, it requires soldering and optionally 3d printing. The 3D printied structures are so simple that if you don't have access to a printer you can consider building the case in an alternative way.
 
 So you would order the parts from the Bills of Materials and start soldering them together as shown in the tutorial. After that you can flash the microcontroller with the software and start connecting to the sensor from the Synsip App.
 
 The building process can easily be done in a day and all you need is very basic soldering knowledge that you can learn from Youtube tutorials as i did.
 
-## Two paths
+![PlatformIO Logo](./assets/build-timeline.png)
 
-There are essentially two ways you can use these docs, one way is to simply replicate the project and the other way is to truly understand the project and potentially make changes by yourself if you see room for improvement.
-I have called these different parts the **User-Docs** and **Contributor-Docs** lol.
+## Before you start building
+
+There are two approaches how you can use this project.
+
+**Option one**: the user:
+You should go this path if you just want to start brewing data driven coffee **ASAP**, you will not learn how the project works under the hood but the brewing experience will be exactly the same, so enjoy!
+
+**Option two**: the contributor: 
+If you really want to understand how the project works and maybe even make changes or contribute to the project you should follow this path. I will explain how the project works to enable you to build on top of that.
+
+I have called these different paths the **User-Docs** and **Contributor-Docs**.
