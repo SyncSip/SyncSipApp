@@ -21,7 +21,7 @@ function HomepageHeader() {
           <Link
             className={clsx('button button--secondary button--lg', styles.button)}
             to="/docs/intro">
-            Grinduino Documentation 
+            SyncSip Documentation 
           </Link>
         </div>
       </div>
